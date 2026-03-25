@@ -9,9 +9,24 @@ This Docker setup provides complete containerization of the Sanos y Salvos micro
 - 4GB+ RAM available
 - ~2GB disk space for images and volumes
 
-## Quick Start
+## Configuration
 
-### 1. Build All Docker Images
+### 1. Create `.env` file from template
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your actual credentials (DO NOT commit this file):
+```env
+MYSQL_ROOT_PASSWORD=your-secure-password
+MYSQL_USER=sanosuser
+MYSQL_PASSWORD=your-secure-password
+JWT_SECRET=your-jwt-secret
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+```
+
+### 2. Build All Docker Images
 ```bash
 ./build.sh
 ```
@@ -28,7 +43,21 @@ This will start all containers and initialize the databases.
 ./health-check.sh
 ```
 This verifies all services are responding to health checks.
+## Security Best Practices
 
+### Environment Variables
+- Never commit `.env` file (add to .gitignore ✓)
+- Use `.env.example` as template documentation
+- Different values for development/production
+- Rotate secrets regularly in production
+
+### Database Security
+For production, use:
+- Strong MySQL passwords
+- Separate database user per application
+- Enable SSL/TLS for database connections
+- Regular backups with encryption
+- Minimal privileges per user role
 ## Architecture
 
 ### Containers
@@ -87,8 +116,8 @@ docker-compose ps
 
 ### Access MySQL database
 ```bash
-docker exec -it sanos-mysql mysql -u sanosuser -p sanosysalvos
-# Password: sanospass123
+# Create .env first if not exists
+docker exec -it sanos-mysql mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} sanosysalvos
 ```
 
 ### Execute docker-compose manually
@@ -101,8 +130,9 @@ docker-compose restart    # Restart all services
 ## Configuration
 
 ### Database Credentials
-- **Root User**: root / root
-- **Application User**: sanosuser / sanospass123
+Update `.env` file with secure values (do NOT commit):
+- **Root User**: user + password from .env
+- **Application User**: ${MYSQL_USER} / ${MYSQL_PASSWORD}
 
 ### Spring Profiles
 When running in Docker, the `docker` Spring profile is active, which configures services to use MySQL container hostname.

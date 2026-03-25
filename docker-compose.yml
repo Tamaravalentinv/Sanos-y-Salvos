@@ -6,9 +6,9 @@ services:
     image: mysql:8.0
     container_name: sanos-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: sanosuser
-      MYSQL_PASSWORD: sanospass123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -29,9 +29,9 @@ services:
       dockerfile: Dockerfile
     container_name: ms-usuarios
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sanosysalvos_usuarios
-      SPRING_DATASOURCE_USERNAME: sanosuser
-      SPRING_DATASOURCE_PASSWORD: sanospass123
+      SPRING_DATASOURCE_URL: ${USUARIOS_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${USUARIOS_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${USUARIOS_DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -54,9 +54,9 @@ services:
       dockerfile: Dockerfile
     container_name: ms-reportes
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sanosysalvos
-      SPRING_DATASOURCE_USERNAME: sanosuser
-      SPRING_DATASOURCE_PASSWORD: sanospass123
+      SPRING_DATASOURCE_URL: ${REPORTES_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${REPORTES_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${REPORTES_DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -79,9 +79,9 @@ services:
       dockerfile: Dockerfile
     container_name: ms-geolocalizacion
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sanosysalvos
-      SPRING_DATASOURCE_USERNAME: sanosuser
-      SPRING_DATASOURCE_PASSWORD: sanospass123
+      SPRING_DATASOURCE_URL: ${GEO_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${GEO_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${GEO_DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -104,9 +104,9 @@ services:
       dockerfile: Dockerfile
     container_name: ms-coincidencias
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sanosysalvos
-      SPRING_DATASOURCE_USERNAME: sanosuser
-      SPRING_DATASOURCE_PASSWORD: sanospass123
+      SPRING_DATASOURCE_URL: ${COINCIDENCIAS_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${COINCIDENCIAS_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${COINCIDENCIAS_DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
     ports:
@@ -129,9 +129,9 @@ services:
       dockerfile: Dockerfile
     container_name: ms-notificaciones
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sanosysalvos_notificaciones
-      SPRING_DATASOURCE_USERNAME: sanosuser
-      SPRING_DATASOURCE_PASSWORD: sanospass123
+      SPRING_DATASOURCE_URL: ${NOTIFICACIONES_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${NOTIFICACIONES_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${NOTIFICACIONES_DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
     ports:

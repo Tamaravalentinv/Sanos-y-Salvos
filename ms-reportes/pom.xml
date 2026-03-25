@@ -5,22 +5,16 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.5</version>
-        <relativePath/>
+        <groupId>com.sanosysalvos</groupId>
+        <artifactId>sanos-y-salvos</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../..</relativePath>
     </parent>
 
-    <groupId>com.sanosysalvos</groupId>
-    <artifactId>ms-mascotas</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>ms-mascotas</name>
-
-    <properties>
-        <java.version>17</java.version>
-    </properties>
+    <artifactId>ms-reportes</artifactId>
+    <name>ms-reportes</name>
+    <description>Microservice for Pet Reports (Lost/Found)</description>
 
     <dependencies>
 
