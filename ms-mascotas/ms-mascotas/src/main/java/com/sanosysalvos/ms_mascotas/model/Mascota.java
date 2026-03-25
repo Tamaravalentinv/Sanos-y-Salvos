@@ -1,89 +1,45 @@
 package com.sanosysalvos.ms_mascotas.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "mascotas_reporte")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Mascota {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 100)
     private String nombre;
-    private String tipo;
+
+    @Column(nullable = false, length = 50)
+    private String tipo; // PERRO, GATO, AVE, ROEDOR, etc.
+
+    @Column(nullable = false, length = 100)
     private String raza;
+
+    @Column(nullable = false, length = 50)
     private String color;
-    private String estado;
-    private String ubicacion;
-    private String fecha;
-    private String contacto;
 
-    // Getters y Setters
-    public Long getId() {
-        return id;
-    }
+    // Relación con características
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "caracteristica_id")
+    private CaracteristicaMascota caracteristica;
 
-    public String getNombre() {
-        return nombre;
-    }
+    // Relación con fotos
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "mascota_id")
+    private java.util.List<FotoMascota> fotos;
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
-    public String getRaza() {
-        return raza;
-    }
-
-    public void setRaza(String raza) {
-        this.raza = raza;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
-    public String getUbicacion() {
-        return ubicacion;
-    }
-
-    public void setUbicacion(String ubicacion) {
-        this.ubicacion = ubicacion;
-    }
-
-    public String getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(String fecha) {
-        this.fecha = fecha;
-    }
-
-    public String getContacto() {
-        return contacto;
-    }
-
-    public void setContacto(String contacto) {
-        this.contacto = contacto;
-    }
+    // Relación con reporte
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporte_id")
+    private Reporte reporte;
 }
