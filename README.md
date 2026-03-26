@@ -68,52 +68,118 @@ Sistema de **6 microservicios** independientes + API Gateway:
 
 ## 🚀 Inicio Rápido
 
-### 1. Clonar el Repositorio
+### Opción 1: Desarrollo Local (Recomendado para desarrollo)
+
+#### Paso 1: Clonar el Repositorio
 
 ```bash
 git clone <repository-url>
 cd Sanos-y-Salvos
 ```
 
-### 2. Configurar Variables de Entorno
+#### Paso 2: Configurar la Base de Datos MySQL
+
+1. Inicia XAMPP y asegúrate que MySQL está ejecutándose
+2. Abre phpMyAdmin: http://localhost/phpmyadmin
+3. Importa el script SQL:
+   - Ve a "Importar"
+   - Selecciona el archivo `database/completo_script.sql`
+   - Haz clic en "Continuar"
+4. Verifica que se crearon las 3 bases de datos:
+   - `sanosysalvos`
+   - `sanosysalvos_usuarios`
+   - `sanosysalvos_notificaciones`
+
+#### Paso 3: Compilar el Proyecto
 
 ```bash
-cp .env.example .env
-# Edita .env con tus credenciales
-nano .env
+cd Sanos-y-Salvos
+mvnw.cmd clean install -DskipTests
 ```
 
-### 3. Construir Imagenes Docker
+#### Paso 4: Ejecutar los Microservicios
+
+En terminales separadas, dentro de cada directorio de microservicio:
 
 ```bash
-./scripts/build.sh
-```
+# Terminal 1: MS Usuarios (Puerto 8084)
+cd ms-usuarios
+mvnw.cmd spring-boot:run
 
-### 4. Iniciar el Stack
+# Terminal 2: MS Reportes (Puerto 8083)
+cd ms-reportes
+mvnw.cmd spring-boot:run
 
-```bash
-./scripts/up.sh
-```
+# Terminal 3: MS Geolocalizacion (Puerto 8081)
+cd ms-geolocalizacion
+mvnw.cmd spring-boot:run
 
-### 5. Verificar Servicios
+# Terminal 4: MS Coincidencias (Puerto 8082)
+cd ms-coincidencias
+mvnw.cmd spring-boot:run
 
-```bash
-./scripts/health-check.sh
+# Terminal 5: MS Notificaciones (Puerto 8085)
+cd ms-notificaciones
+mvnw.cmd spring-boot:run
+
+# Terminal 6: API Gateway (Puerto 8080)
+cd api-gateway
+mvnw.cmd spring-boot:run
 ```
 
 Los servicios estarán disponibles en:
-- API Gateway: http://localhost:8080
-- MS Usuarios: http://localhost:8084
-- MS Reportes: http://localhost:8083
-- MS Geolocalizacion: http://localhost:8081
-- MS Coincidencias: http://localhost:8082
-- MS Notificaciones: http://localhost:8085
+- **API Gateway (BFF)**: http://localhost:8080/api
+- **MS Usuarios**: http://localhost:8084 (acceso directo para testing)
+- **MS Reportes**: http://localhost:8083
+- **MS Geolocalizacion**: http://localhost:8081
+- **MS Coincidencias**: http://localhost:8082
+- **MS Notificaciones**: http://localhost:8085
 
-### Detener el Stack
+#### Paso 5: Verificar la Salud de los Servicios
 
 ```bash
+curl http://localhost:8080/api/health
+curl http://localhost:8084/actuator/health
+```
+
+### Opción 2: Docker (Para producción/staging)
+
+#### Paso 1: Clonar el Repositorio
+
+```bash
+git clone <repository-url>
+cd Sanos-y-Salvos
+```
+
+#### Paso 2: Configurar Variables de Entorno
+
+```bash
+cp .env.example .env
+# Edita .env con tus credenciales (usuario/contraseña MySQL)
+```
+
+#### Paso 3: Construir e Iniciar
+
+```bash
+# Construir imagenes
+./scripts/build.sh
+
+# Iniciar stack
+./scripts/up.sh
+
+# Verificar servicios
+./scripts/health-check.sh
+
+# Ver logs en tiempo real
+./scripts/logs.sh
+
+# Detener stack
 ./scripts/down.sh
 ```
+
+**Servicios disponibles:**
+- API Gateway: http://localhost:8080
+- MySQL: localhost:3306 (desde contenedor)
 
 ## 📁 Estructura del Proyecto
 
