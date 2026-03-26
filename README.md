@@ -352,19 +352,3 @@ POST   /api/notifications               - Crear notificación
 GET    /api/notifications/user/{id}     - Notificaciones de usuario
 ```
 
-## 👥 Contribuidores
-
-- [Tu nombre/equipo]
-
-## 📄 Licencia
-
-Este proyecto es parte del Caso Semestral de [Universidad/Institución].
-
-## 🤝 Soporte
-
-Para preguntas o problemas, contactar a [email/contacto].
-
----
-
-**Última actualización:** Marzo 2026  
-**Versión:** 1.0.0
