@@ -1,0 +1,231 @@
+version: '3.8'
+
+services:
+  # MySQL Database Container (shared for all services)
+  mysql:
+    image: mysql:8.0
+    container_name: sanos-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MS Usuarios (Port 8084)
+  ms-usuarios:
+    build:
+      context: .
+      dockerfile: ./ms-usuarios/Dockerfile
+    container_name: ms-usuarios
+    environment:
+      SPRING_DATASOURCE_URL: ${USUARIOS_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${USUARIOS_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${USUARIOS_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MS Reportes (Port 8083)
+  ms-reportes:
+    build:
+      context: .
+      dockerfile: ./ms-reportes/Dockerfile
+    container_name: ms-reportes
+    environment:
+      SPRING_DATASOURCE_URL: ${REPORTES_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${REPORTES_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${REPORTES_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MS Geolocalizacion (Port 8081)
+  ms-geolocalizacion:
+    build:
+      context: .
+      dockerfile: ./ms-geolocalizacion/Dockerfile
+    container_name: ms-geolocalizacion
+    environment:
+      SPRING_DATASOURCE_URL: ${GEO_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${GEO_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${GEO_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MS Coincidencias (Port 8082)
+  ms-coincidencias:
+    build:
+      context: .
+      dockerfile: ./ms-coincidencias/Dockerfile
+    container_name: ms-coincidencias
+    environment:
+      SPRING_DATASOURCE_URL: ${COINCIDENCIAS_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${COINCIDENCIAS_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${COINCIDENCIAS_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MS Notificaciones (Port 8085)
+  ms-notificaciones:
+    build:
+      context: .
+      dockerfile: ./ms-notificaciones/Dockerfile
+    container_name: ms-notificaciones
+    environment:
+      SPRING_DATASOURCE_URL: ${NOTIFICACIONES_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${NOTIFICACIONES_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${NOTIFICACIONES_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MS Proyectos (Port 8086)
+  ms-proyectos:
+    build:
+      context: .
+      dockerfile: ./ms-proyectos/Dockerfile
+    container_name: ms-proyectos
+    environment:
+      SPRING_DATASOURCE_URL: ${PROYECTOS_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${PROYECTOS_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${PROYECTOS_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MS Recursos Humanos (Port 8087)
+  ms-recursos-humanos:
+    build:
+      context: .
+      dockerfile: ./ms-recursos-humanos/Dockerfile
+    container_name: ms-recursos-humanos
+    environment:
+      SPRING_DATASOURCE_URL: ${RH_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${RH_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${RH_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8087:8087"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway BFF (Port 8080)
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: api-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ms-usuarios
+      - ms-reportes
+      - ms-geolocalizacion
+      - ms-coincidencias
+      - ms-notificaciones
+      - ms-proyectos
+      - ms-recursos-humanos
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  sanos-network:
+    driver: bridge

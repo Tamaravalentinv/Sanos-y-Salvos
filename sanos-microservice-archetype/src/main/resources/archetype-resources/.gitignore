@@ -1,0 +1,29 @@
+# Dependencies
+target/
+*.jar
+*.war
+*.ear
+.classpath
+.project
+.settings/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.vscode/
+.DS_Store
+
+# Build
+.gradle/
+build/
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+.jacoco/
+coverage.xml

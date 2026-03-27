@@ -1,0 +1,4 @@
+#!/bin/bash
+# Dummy placeholder for Unix users
+echo "This is a placeholder shell file for building the microservice."
+echo "Please use Maven commands or Docker instead."

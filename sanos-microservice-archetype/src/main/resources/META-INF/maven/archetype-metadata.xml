@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archetype-descriptor name="sanos-microservice-archetype"
+    xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0 http://maven.apache.org/xsd/archetype-descriptor-1.1.0.xsd">
+
+    <requiredProperties>
+        <requiredProperty key="name">
+            <defaultValue>My Microservice</defaultValue>
+        </requiredProperty>
+        <requiredProperty key="description">
+            <defaultValue>Sanos y Salvos Microservice</defaultValue>
+        </requiredProperty>
+    </requiredProperties>
+
+    <fileSets>
+        <fileSet filtered="true" packaged="true">
+            <directory>src/main/java/com/sanosysalvos/__package__</directory>
+            <includes>
+                <include>**/*.java</include>
+            </includes>
+        </fileSet>
+        <fileSet filtered="true">
+            <directory>src/main/resources</directory>
+            <includes>
+                <include>**/*.properties</include>
+                <include>**/*.yml</include>
+                <include>**/*.yaml</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</archetype-descriptor>
