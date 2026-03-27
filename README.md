@@ -228,10 +228,9 @@ mvn test -pl ms-proyectos
 
 - ✅ JUnit 5 + Mockito para pruebas unitarias
 - ✅ 32 tests implementados (0 fallos, 0 errores)
-- ✅ Cobertura de código: ~92% (supera 60% requerido)
+- ✅ Cobertura de código: ~92% 
 - ✅ JaCoCo v0.8.10 para generación de reportes
 - ✅ SonarQube v3.10.0.2594 configurado
-- ✅ Enforcement rule: mínimo 60% COVEREDRATIO
 
 ### Generar Reporte de Cobertura
 
