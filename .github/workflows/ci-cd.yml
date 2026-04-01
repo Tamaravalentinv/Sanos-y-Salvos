@@ -71,17 +71,14 @@ jobs:
         mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS sanos_proyectos;"
         mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS sanos_recursos_humanos;"
     
-    - name: Run Tests
-      run: mvn clean test -DskipITs=true -X 2>&1 | tail -100
+    - name: Run Tests and Generate Coverage
+      run: mvn clean test jacoco:report -DskipITs=true
       env:
         SPRING_PROFILES_ACTIVE: test
         SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/sanos_usuarios?allowPublicKeyRetrieval=true&useSSL=false
         SPRING_DATASOURCE_USERNAME: root
         SPRING_DATASOURCE_PASSWORD: root
         MAVEN_OPTS: -Xmx1024m
-    
-    - name: Generate Coverage Report
-      run: mvn jacoco:report
     
     - name: Upload test results
       if: always()
