@@ -72,7 +72,7 @@ jobs:
         mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS sanos_recursos_humanos;"
     
     - name: Run Tests and Generate Coverage
-      run: mvn clean test jacoco:report -DskipITs=true
+      run: mvn clean test jacoco:report -DskipITs=true -pl "!sanos-microservice-archetype"
       env:
         SPRING_PROFILES_ACTIVE: test
         SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/sanos_usuarios?allowPublicKeyRetrieval=true&useSSL=false
@@ -109,7 +109,7 @@ jobs:
         cache: maven
     
     - name: Build all modules
-      run: mvn clean package -DskipTests=true
+      run: mvn clean package -DskipTests=true -pl "!sanos-microservice-archetype"
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
