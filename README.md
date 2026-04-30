@@ -371,38 +371,6 @@ GET    /matches/recientes               - Obtener coincidencias recientes
 
 ---
 
-## Cambios Recientes
-
-### Versión: Aislamiento de MS Coincidencias
-
-**Cambio Principal:** MS Coincidencias ha sido removido del API Gateway público y ahora funciona como servicio interno.
-
-**Archivos Modificados:**
-- `docker-compose.yml` - Removido puerto 8082 expuesto
-- `api-gateway/src/main/resources/application.properties` - Removida ruta /api/matches/**
-- `ms-reportes/src/main/resources/application.properties` - Agregada URL interna de coincidencias
-- `api-gateway/src/main/java/.../BFFService.java` - Rutas ahora delegadas a MS Reportes
-- `AISLAMIENTO_COINCIDENCIAS.md` - Documentación técnica completa
-
-**Archivos Creados:**
-- `ms-reportes/src/main/java/.../CoincidenciaProxyController.java` - Proxy transparente
-- `ms-reportes/src/main/java/.../RestTemplateConfig.java` - Configuración HTTP
-
-**Impacto:**
-- MS Coincidencias NO es accesible desde Internet
-- Todos los endpoints de coincidencias se acceden a través de MS Reportes: `http://localhost:8083/matches/**`
-- BFF sigue funcionando sin cambios en la API pública
-- Arquitectura más limpia y segura
-
-**Documentación:**
-Ver [AISLAMIENTO_COINCIDENCIAS.md](./AISLAMIENTO_COINCIDENCIAS.md) para:
-- Diagrama de arquitectura antes/después
-- Detalles técnicos de implementación
-- Instrucciones de prueba completas
-- Configuración por ambiente
-
----
-
 ## Contribuir
 
 ### Desarrollo
