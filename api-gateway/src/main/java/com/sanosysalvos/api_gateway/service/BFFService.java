@@ -19,7 +19,6 @@ public class BFFService {
     private static final String MS_USUARIOS_URL = "http://localhost:8084";
     private static final String MS_REPORTES_URL = "http://localhost:8083";
     private static final String MS_GEOLOCALIZACION_URL = "http://localhost:8081";
-    private static final String MS_COINCIDENCIAS_URL = "http://localhost:8082";
     private static final String MS_NOTIFICACIONES_URL = "http://localhost:8085";
 
     @Cacheable(value = "dashboard", key = "#userId")
@@ -72,6 +71,20 @@ public class BFFService {
     @Cacheable(value = "coincidencias_agrupadas", key = "#userId")
     public CoincidenciasAgrupadasResponse getCoincidenciasAgrupadas(Long userId) {
         log.info("Coincidencias: {}", userId);
-        return CoincidenciasAgrupadasResponse.builder().totalCoincidencias(0).build();
+        try {
+            // Las coincidencias ahora se obtienen a través de ms-reportes
+            // que actúa como proxy hacia ms-coincidencias (aislado)
+            Object response = restTemplate.getForObject(
+                MS_REPORTES_URL + "/matches/pendientes",
+                Object.class
+            );
+            
+            // Aquí iría la lógica de transformación a CoincidenciasAgrupadasResponse
+            // Por ahora retornamos una respuesta vacía
+            return CoincidenciasAgrupadasResponse.builder().totalCoincidencias(0).build();
+        } catch (Exception e) {
+            log.error("Error al obtener coincidencias agrupadas", e);
+            return CoincidenciasAgrupadasResponse.builder().totalCoincidencias(0).build();
+        }
     }
 }
