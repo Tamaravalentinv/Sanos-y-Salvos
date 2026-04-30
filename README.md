@@ -177,12 +177,6 @@ curl http://localhost:8081/ubicaciones # MS Geolocalizacion
 **Nota:** Ms-coincidencias NO está expuesto directamente. Para acceder a endpoints de coincidencias, 
 usar la ruta de MS Reportes: `GET http://localhost:8083/matches/pendientes`
 
-#### 5. Verificar salud de servicios
-
-```bash
-curl http://localhost:8080/api/health
-```
-
 ## Estructura del Proyecto
 
 ```
@@ -396,36 +390,3 @@ git push origin feature/nueva-funcionalidad
 ```
 
 5. Crea un Pull Request
-
-### Estándares de Código
-
-- **Java**: Se usa Java 17 con Spring Boot 3.3.13
-- **Naming**: Sigue convenciones de Spring (camelCase para variables, PascalCase para clases)
-- **Testing**: Cubre con JUnit 5 + Mockito, objetivo mínimo 80% de cobertura
-- **Commits**: Mensajes descriptivos en inglés o español
-
-### Reportar Bugs
-
-Abre un issue en GitHub con:
-- Descripción clara del problema
-- Pasos para reproducir
-- Comportamiento esperado vs actual
-- Versión de Java y SO
-
----
-
-## Soporte
-
-- Documentación técnica: [AISLAMIENTO_COINCIDENCIAS.md](./AISLAMIENTO_COINCIDENCIAS.md)
-- API Gateway BFF: [BFF-FRONTEND-INTEGRATION.md](./frontend/BFF-FRONTEND-INTEGRATION.md)
-- CI/CD: [CI-CD-SETUP.md](./CI-CD-SETUP.md)
-
----
-
-## Licencia
-
-Este proyecto es parte de la iniciativa "Sanos y Salvos" - Reunión de Mascotas Perdidas y Encontradas.
-
----
-
-**Última actualización:** 2024 | Proyecto: Sanos y Salvos Platform
