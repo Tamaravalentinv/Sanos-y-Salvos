@@ -9,9 +9,8 @@
         <groupId>com.sanosysalvos</groupId>
         <artifactId>sanos-y-salvos</artifactId>
         <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../</relativePath>
     </parent>
-
     <artifactId>ms-reportes</artifactId>
     <name>ms-reportes</name>
     <description>Microservice for Pet Reports (Lost/Found)</description>
