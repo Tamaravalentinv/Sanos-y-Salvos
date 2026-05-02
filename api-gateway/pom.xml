@@ -9,9 +9,8 @@
         <groupId>com.sanosysalvos</groupId>
         <artifactId>sanos-y-salvos</artifactId>
         <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../</relativePath>
     </parent>
-
     <artifactId>api-gateway</artifactId>
     <name>api-gateway</name>
     <description>API Gateway Sanos y Salvos - BFF</description>

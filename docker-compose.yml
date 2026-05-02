@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL Database Container (shared for all services)
   mysql:
@@ -10,7 +8,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -25,7 +23,7 @@ services:
   ms-usuarios:
     build:
       context: .
-      dockerfile: ./ms-usuarios/Dockerfile
+      dockerfile: ms-usuarios/Dockerfile
     container_name: ms-usuarios
     environment:
       SPRING_DATASOURCE_URL: ${USUARIOS_DB_URL}
@@ -50,7 +48,7 @@ services:
   ms-reportes:
     build:
       context: .
-      dockerfile: ./ms-reportes/Dockerfile
+      dockerfile: ms-reportes/Dockerfile
     container_name: ms-reportes
     environment:
       SPRING_DATASOURCE_URL: ${REPORTES_DB_URL}
@@ -75,7 +73,7 @@ services:
   ms-geolocalizacion:
     build:
       context: .
-      dockerfile: ./ms-geolocalizacion/Dockerfile
+      dockerfile: ms-geolocalizacion/Dockerfile
     container_name: ms-geolocalizacion
     environment:
       SPRING_DATASOURCE_URL: ${GEO_DB_URL}
@@ -96,11 +94,11 @@ services:
       timeout: 10s
       retries: 3
 
-  # MS Coincidencias (Internal - Port 8082, no exposed)
+  # MS Coincidencias (Port 8082)
   ms-coincidencias:
     build:
       context: .
-      dockerfile: ./ms-coincidencias/Dockerfile
+      dockerfile: ms-coincidencias/Dockerfile
     container_name: ms-coincidencias
     environment:
       SPRING_DATASOURCE_URL: ${COINCIDENCIAS_DB_URL}
@@ -108,6 +106,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${COINCIDENCIAS_DB_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8082:8082"
     depends_on:
       mysql:
         condition: service_healthy
@@ -123,7 +123,7 @@ services:
   ms-notificaciones:
     build:
       context: .
-      dockerfile: ./ms-notificaciones/Dockerfile
+      dockerfile: ms-notificaciones/Dockerfile
     container_name: ms-notificaciones
     environment:
       SPRING_DATASOURCE_URL: ${NOTIFICACIONES_DB_URL}
@@ -144,61 +144,11 @@ services:
       timeout: 10s
       retries: 3
 
-  # MS Proyectos (Port 8086)
-  ms-proyectos:
-    build:
-      context: .
-      dockerfile: ./ms-proyectos/Dockerfile
-    container_name: ms-proyectos
-    environment:
-      SPRING_DATASOURCE_URL: ${PROYECTOS_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${PROYECTOS_DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${PROYECTOS_DB_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_PROFILES_ACTIVE: docker
-    ports:
-      - "8086:8086"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    networks:
-      - sanos-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # MS Recursos Humanos (Port 8087)
-  ms-recursos-humanos:
-    build:
-      context: .
-      dockerfile: ./ms-recursos-humanos/Dockerfile
-    container_name: ms-recursos-humanos
-    environment:
-      SPRING_DATASOURCE_URL: ${RH_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${RH_DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${RH_DB_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_PROFILES_ACTIVE: docker
-    ports:
-      - "8087:8087"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    networks:
-      - sanos-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   # API Gateway BFF (Port 8080)
   api-gateway:
     build:
       context: .
-      dockerfile: ./api-gateway/Dockerfile
+      dockerfile: api-gateway/Dockerfile
     container_name: api-gateway
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -210,8 +160,6 @@ services:
       - ms-geolocalizacion
       - ms-coincidencias
       - ms-notificaciones
-      - ms-proyectos
-      - ms-recursos-humanos
     networks:
       - sanos-network
     healthcheck:
