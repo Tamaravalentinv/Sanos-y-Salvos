@@ -1,9 +1,19 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { FiMenu, FiBell, FiLogOut, FiUser } from 'react-icons/fi'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { FiMenu, FiBell, FiSearch } from 'react-icons/fi'
 import { useAuthStore } from '@/context/authStore'
 import { useNotificacionStore } from '@/context/notificacionStore'
 import { getInitials } from '@/utils/helpers'
+
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard':      'Dashboard',
+  '/reportes':       'Reportes',
+  '/reportes/crear': 'Nuevo Reporte',
+  '/coincidencias':  'Coincidencias',
+  '/mapa':           'Mapa de Incidencias',
+  '/notificaciones': 'Notificaciones',
+  '/perfil':         'Mi Perfil',
+}
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -11,9 +21,11 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, logout } = useAuthStore()
   const { noLeidasCount } = useNotificacionStore()
-  const [showProfileMenu, setShowProfileMenu] = React.useState(false)
+
+  const title = PAGE_TITLES[location.pathname] ?? 'Sanos y Salvos'
 
   const handleLogout = () => {
     logout()
@@ -21,79 +33,62 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="flex items-center justify-between px-4 md:px-6 py-4">
-        {/* Left side */}
+    <header className="bg-white border-b border-slate-100 sticky top-0 z-30 h-16">
+      <div className="flex items-center justify-between h-full px-4 md:px-6">
+        {/* Left */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition"
-            aria-label="Toggle menu"
+            className="md:hidden p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition"
+            aria-label="Abrir menú"
           >
-            <FiMenu size={24} />
+            <FiMenu size={22} />
           </button>
-
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary-600 rounded-lg">
-              <span className="text-white font-bold text-lg">🐾</span>
-            </div>
-            <span className="font-bold text-xl text-gray-900 hidden sm:inline">
-              Sanos y Salvos
-            </span>
-          </Link>
+          <h1 className="font-bold text-slate-800 text-lg hidden sm:block">{title}</h1>
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-4">
+        {/* Center - search (desktop) */}
+        <div className="hidden md:flex flex-1 max-w-sm mx-6">
+          <div className="relative w-full">
+            <FiSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              placeholder="Buscar mascotas, reportes…"
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200
+                         text-sm text-slate-700 placeholder:text-slate-400
+                         focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition"
+            />
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="flex items-center gap-2">
           {/* Notifications */}
           <Link
             to="/notificaciones"
-            className="relative p-2 hover:bg-gray-100 rounded-lg transition"
+            className="relative p-2.5 rounded-xl hover:bg-slate-100 text-slate-600 transition"
             aria-label="Notificaciones"
           >
-            <FiBell size={24} />
+            <FiBell size={20} />
             {noLeidasCount > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {noLeidasCount > 9 ? '9+' : noLeidasCount}
-              </span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
             )}
           </Link>
 
-          {/* Profile Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition"
-            >
-              <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
-                {user && getInitials(user.nombre, user.apellido)}
-              </div>
-              <span className="text-sm font-medium text-gray-900 hidden md:inline">
-                {user?.nombre}
-              </span>
-            </button>
-
-            {/* Dropdown Menu */}
-            {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                <Link
-                  to="/perfil"
-                  className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition border-b border-gray-200"
-                  onClick={() => setShowProfileMenu(false)}
-                >
-                  <FiUser size={18} />
-                  Mi Perfil
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition text-red-600"
-                >
-                  <FiLogOut size={18} />
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Avatar */}
+          <button
+            onClick={handleLogout}
+            title="Cerrar sesión"
+            className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-slate-100 transition group"
+          >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700
+                            flex items-center justify-center text-white font-bold text-xs shadow-sm">
+              {user ? getInitials(user.nombre, user.apellido) : '?'}
+            </div>
+            <span className="hidden md:block text-sm font-medium text-slate-700 group-hover:text-slate-900">
+              {user?.nombre}
+            </span>
+          </button>
         </div>
       </div>
     </header>

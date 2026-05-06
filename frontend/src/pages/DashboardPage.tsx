@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiPlus, FiTrendingUp } from 'react-icons/fi'
+import { FiPlus, FiFileText, FiGitMerge, FiMapPin, FiTrendingUp, FiAlertCircle } from 'react-icons/fi'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
 import Badge from '@/components/Badge'
@@ -8,184 +8,199 @@ import { dashboardService } from '@/services/dashboard.service'
 import { reporteService } from '@/services/reporte.service'
 import { EstadisticasGlobales, Reporte } from '@/types'
 import { formatDate } from '@/utils/helpers'
+import { useAuthStore } from '@/context/authStore'
 import toast from 'react-hot-toast'
 
+const StatCard = ({
+  icon, label, value, sub, color,
+}: { icon: React.ReactNode; label: string; value: string | number; sub?: string; color: string }) => (
+  <Card className="relative overflow-hidden">
+    <div className={`absolute -top-4 -right-4 w-24 h-24 rounded-full opacity-10 ${color}`} />
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+        <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
+        {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
+      </div>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} bg-opacity-15`}>
+        {icon}
+      </div>
+    </div>
+  </Card>
+)
+
+const Skeleton = () => (
+  <div className="animate-pulse space-y-3">
+    <div className="h-6 bg-slate-100 rounded-xl w-1/3" />
+    <div className="h-4 bg-slate-100 rounded-xl w-1/2" />
+  </div>
+)
+
 const DashboardPage: React.FC = () => {
+  const { user } = useAuthStore()
   const [stats, setStats] = useState<EstadisticasGlobales | null>(null)
-  const [reportesRecientes, setReportesRecientes] = useState<Reporte[]>([])
+  const [reportes, setReportes] = useState<Reporte[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
   const loadData = async () => {
     setLoading(true)
     try {
       const [statsData, reportesData] = await Promise.all([
-        dashboardService.getEstadisticasGlobales(),
-        reporteService.getAllReportes({ page: 0, size: 5 }),
+        dashboardService.getEstadisticasGlobales().catch(() => null),
+        reporteService.getAllReportes({ page: 0, size: 5 }).catch(() => ({ content: [], totalElements: 0, totalPages: 0 })),
       ])
-      setStats(statsData)
-      setReportesRecientes(reportesData.content)
-    } catch (error) {
+      if (statsData) setStats(statsData)
+      setReportes(reportesData.content)
+    } catch {
       toast.error('Error al cargar el dashboard')
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+  const hora = new Date().getHours()
+  const saludo = hora < 12 ? 'Buenos días' : hora < 18 ? 'Buenas tardes' : 'Buenas noches'
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Bienvenido a Sanos y Salvos - Recupera tu mascota
+    <div className="space-y-6 fade-in">
+      {/* Welcome banner */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-6 text-white relative overflow-hidden">
+        <div className="absolute right-0 top-0 text-[8rem] leading-none opacity-10 select-none">🐾</div>
+        <div className="relative z-10">
+          <p className="text-primary-200 text-sm font-medium">{saludo},</p>
+          <h1 className="text-2xl font-bold mt-0.5">{user?.nombre} {user?.apellido} 👋</h1>
+          <p className="text-primary-200 text-sm mt-2 max-w-sm">
+            Bienvenido a Sanos y Salvos. Ayudamos a reunir familias con sus mascotas.
           </p>
-        </div>
-        <Link to="/reportes/crear">
-          <Button variant="primary" size="lg">
-            <FiPlus size={20} />
-            Crear Reporte
-          </Button>
-        </Link>
-      </div>
-
-      {/* Stats Grid */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-            <div className="space-y-2">
-              <p className="text-blue-600 text-sm font-semibold">Total Reportes</p>
-              <p className="text-3xl font-bold text-blue-900">{stats.totalReportes}</p>
-              <p className="text-blue-600 text-xs">
-                {stats.reportesActivos} activos
-              </p>
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-green-100">
-            <div className="space-y-2">
-              <p className="text-green-600 text-sm font-semibold">Resueltos</p>
-              <p className="text-3xl font-bold text-green-900">{stats.reportesResueltos}</p>
-              <p className="text-green-600 text-xs">
-                {Math.round(stats.tasaResolucion * 100)}% tasa de éxito
-              </p>
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-            <div className="space-y-2">
-              <p className="text-purple-600 text-sm font-semibold">Coincidencias</p>
-              <p className="text-3xl font-bold text-purple-900">
-                {stats.coincidenciasDetectadas}
-              </p>
-              <p className="text-purple-600 text-xs">Detectadas</p>
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
-            <div className="space-y-2">
-              <p className="text-orange-600 text-sm font-semibold">Usuarios Activos</p>
-              <p className="text-3xl font-bold text-orange-900">{stats.usuariosActivos}</p>
-              <p className="text-orange-600 text-xs">En la comunidad</p>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <Card>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Acciones Rápidas</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link to="/reportes/crear" className="block">
-            <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer text-center">
-              <p className="text-2xl mb-2">📝</p>
-              <p className="font-semibold text-gray-900">Crear Reporte</p>
-              <p className="text-sm text-gray-600">Reporta una mascota perdida</p>
-            </div>
-          </Link>
-
-          <Link to="/reportes" className="block">
-            <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer text-center">
-              <p className="text-2xl mb-2">🔍</p>
-              <p className="font-semibold text-gray-900">Ver Reportes</p>
-              <p className="text-sm text-gray-600">Busca mascotas cercanas</p>
-            </div>
-          </Link>
-
-          <Link to="/mapa" className="block">
-            <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer text-center">
-              <p className="text-2xl mb-2">🗺️</p>
-              <p className="font-semibold text-gray-900">Ver Mapa</p>
-              <p className="text-sm text-gray-600">Zonas de incidencia</p>
-            </div>
-          </Link>
-        </div>
-      </Card>
-
-      {/* Recent Reports */}
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Reportes Recientes</h2>
-          <Link to="/reportes">
-            <Button variant="secondary" size="sm">
-              Ver Todos
+          <Link to="/reportes/crear" className="mt-4 inline-block">
+            <Button variant="accent" size="md">
+              <FiPlus size={16} /> Crear nuevo reporte
             </Button>
           </Link>
         </div>
+      </div>
 
-        <div className="space-y-3">
-          {reportesRecientes.length > 0 ? (
-            reportesRecientes.map((reporte) => (
-              <div
-                key={reporte.id}
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-gray-900">
-                        {reporte.mascota.nombre} - {reporte.mascota.especie}
-                      </p>
-                      <Badge status={reporte.estado}>{reporte.estado}</Badge>
-                      <Badge status={reporte.tipo}>{reporte.tipo}</Badge>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {reporte.mascota.raza} • {reporte.mascota.tamaño}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      📍 {reporte.ubicacion.ciudad} • {formatDate(reporte.fechaReporte)}
-                    </p>
-                  </div>
-                  <Link to={`/reportes/${reporte.id}`}>
-                    <Button variant="secondary" size="sm">
-                      Ver
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))
+      {/* Stats */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Card key={i}><Skeleton /></Card>)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            icon={<FiFileText size={20} className="text-primary-600" />}
+            label="Total Reportes" value={stats?.totalReportes ?? reportes.length}
+            sub={`${stats?.reportesActivos ?? '—'} activos`}
+            color="bg-primary-500"
+          />
+          <StatCard
+            icon={<FiTrendingUp size={20} className="text-emerald-600" />}
+            label="Resueltos" value={stats?.reportesResueltos ?? '—'}
+            sub={stats ? `${Math.round(stats.tasaResolucion * 100)}% éxito` : undefined}
+            color="bg-emerald-500"
+          />
+          <StatCard
+            icon={<FiGitMerge size={20} className="text-accent-600" />}
+            label="Coincidencias" value={stats?.coincidenciasDetectadas ?? '—'}
+            sub="detectadas" color="bg-accent-500"
+          />
+          <StatCard
+            icon={<FiMapPin size={20} className="text-violet-600" />}
+            label="Usuarios Activos" value={stats?.usuariosActivos ?? '—'}
+            sub="en la comunidad" color="bg-violet-500"
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent reports */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-slate-800 text-lg">Reportes Recientes</h2>
+            <Link to="/reportes">
+              <Button variant="ghost" size="sm">Ver todos →</Button>
+            </Link>
+          </div>
+
+          {loading ? (
+            <Card><Skeleton /></Card>
+          ) : reportes.length === 0 ? (
+            <Card className="text-center py-12">
+              <div className="text-5xl mb-3">🔍</div>
+              <p className="text-slate-500 font-medium">No hay reportes aún</p>
+              <p className="text-slate-400 text-sm mt-1">¡Sé el primero en crear uno!</p>
+              <Link to="/reportes/crear" className="mt-4 inline-block">
+                <Button variant="primary" size="sm"><FiPlus size={14} /> Crear reporte</Button>
+              </Link>
+            </Card>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No hay reportes aún</p>
+            <div className="space-y-3">
+              {reportes.map(r => (
+                <Card key={r.id} hover>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-2xl flex-shrink-0">
+                      {r.mascota?.especie === 'PERRO' ? '🐕' : r.mascota?.especie === 'GATO' ? '🐈' : '🐾'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-slate-800 truncate">
+                          {r.mascota?.nombre ?? 'Sin nombre'} — {r.mascota?.especie}
+                        </p>
+                        <Badge status={r.tipo}>{r.tipo}</Badge>
+                        <Badge status={r.estado}>{r.estado}</Badge>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate">
+                        📍 {r.ubicacion?.ciudad ?? '—'} · {formatDate(r.fechaReporte)}
+                      </p>
+                    </div>
+                    <Link to={`/reportes/${r.id}`} className="flex-shrink-0">
+                      <Button variant="secondary" size="sm">Ver</Button>
+                    </Link>
+                  </div>
+                </Card>
+              ))}
             </div>
           )}
         </div>
-      </Card>
+
+        {/* Quick actions */}
+        <div className="space-y-4">
+          <h2 className="font-bold text-slate-800 text-lg">Acciones Rápidas</h2>
+
+          {[
+            { to: '/reportes/crear', icon: '📝', title: 'Crear Reporte', desc: 'Reporta una mascota perdida o encontrada', color: 'border-primary-200 hover:border-primary-400 hover:bg-primary-50' },
+            { to: '/coincidencias',  icon: '🔗', title: 'Coincidencias', desc: 'Ver mascotas que podrían ser la tuya',    color: 'border-accent-200 hover:border-accent-400 hover:bg-accent-50' },
+            { to: '/mapa',           icon: '🗺️', title: 'Mapa',         desc: 'Zonas de mayor incidencia',              color: 'border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50' },
+          ].map(item => (
+            <Link key={item.to} to={item.to}>
+              <Card className={`border-2 transition-all duration-150 cursor-pointer ${item.color}`} padding="sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{item.icon}</span>
+                  <div>
+                    <p className="font-semibold text-slate-800 text-sm">{item.title}</p>
+                    <p className="text-xs text-slate-500">{item.desc}</p>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ))}
+
+          {/* Alert tip */}
+          <Card className="bg-amber-50 border-amber-200 border">
+            <div className="flex gap-3">
+              <FiAlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-amber-800">Tip importante</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Añade fotos claras y describe señas particulares para aumentar las posibilidades de recuperación.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

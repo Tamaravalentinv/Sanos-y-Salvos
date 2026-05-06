@@ -4,12 +4,14 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
   options: Array<{ value: string; label: string }>
+  placeholder?: string
 }
 
 const Select: React.FC<SelectProps> = ({
   label,
   error,
   options,
+  placeholder = 'Selecciona una opción',
   className = '',
   id,
   ...props
@@ -17,32 +19,29 @@ const Select: React.FC<SelectProps> = ({
   const selectId = id || label?.toLowerCase().replace(/\s+/g, '-')
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <label
-          htmlFor={selectId}
-          className="text-sm font-semibold text-gray-700"
-        >
+        <label htmlFor={selectId} className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
           {label}
         </label>
       )}
       <select
         id={selectId}
-        className={`px-4 py-2.5 rounded-lg border transition ${
-          error
-            ? 'border-red-500 focus:border-red-600 focus:ring-red-500'
-            : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-        } focus:outline-none focus:ring-2 bg-white ${className}`}
+        className={`
+          w-full px-4 py-2.5 rounded-xl border bg-white text-slate-800 text-sm
+          focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
+          transition duration-150 cursor-pointer
+          ${error ? 'border-red-400' : 'border-slate-200'}
+          ${className}
+        `.trim()}
         {...props}
       >
-        <option value="">Selecciona una opción</option>
+        <option value="">{placeholder}</option>
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
-      {error && <span className="text-sm text-red-600">{error}</span>}
+      {error && <span className="text-xs text-red-500 font-medium">{error}</span>}
     </div>
   )
 }

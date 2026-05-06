@@ -87,6 +87,21 @@
     <build>
         <pluginManagement>
             <plugins>
+                <!-- Compiler plugin with Lombok annotation processor -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+
                 <!-- JaCoCo Maven Plugin for Code Coverage -->
                 <plugin>
                     <groupId>org.jacoco</groupId>

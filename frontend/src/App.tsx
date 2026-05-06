@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAuthStore } from '@/context/authStore'
 import { useNotificacionStore } from '@/context/notificacionStore'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import toast, { Toaster } from 'react-hot-toast'
+import { Toaster } from 'react-hot-toast'
 
 // Pages
 import LoginPage from '@/pages/LoginPage'
@@ -14,6 +14,7 @@ import CoincidenciasPage from '@/pages/CoincidenciasPage'
 import GeolocalizacionPage from '@/pages/GeolocalizacionPage'
 import NotificacionesPage from '@/pages/NotificacionesPage'
 import PerfilPage from '@/pages/PerfilPage'
+import ReporteDetailPage from '@/pages/ReporteDetailPage'
 
 // Components
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -66,6 +67,7 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/reportes" element={<ReportesPage />} />
               <Route path="/reportes/crear" element={<CrearReportePage />} />
+              <Route path="/reportes/:id" element={<ReporteDetailPage />} />
               <Route path="/coincidencias" element={<CoincidenciasPage />} />
               <Route path="/mapa" element={<GeolocalizacionPage />} />
               <Route path="/notificaciones" element={<NotificacionesPage />} />

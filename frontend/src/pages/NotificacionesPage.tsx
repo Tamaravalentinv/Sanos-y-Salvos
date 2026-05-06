@@ -3,20 +3,19 @@ import { FiTrash2, FiCheckSquare } from 'react-icons/fi'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
 import Badge from '@/components/Badge'
-import { notificacionService } from '@/services/notificacion.service'
 import { useNotificacionStore } from '@/context/notificacionStore'
-import { Notificacion } from '@/types'
 import { formatDistanceToNow } from '@/utils/helpers'
 import toast from 'react-hot-toast'
 
+const TIPO_ICON: Record<string, string> = {
+  COINCIDENCIA: '🎯',
+  RESOLUCION:   '✅',
+  ALERTA:       '⚠️',
+  INFORMACION:  'ℹ️',
+}
+
 const NotificacionesPage: React.FC = () => {
-  const {
-    notificaciones,
-    loadNotificaciones,
-    marcarTodasComoLeidas,
-    deleteNotificacion,
-    clearAll,
-  } = useNotificacionStore()
+  const { notificaciones, loadNotificaciones, marcarTodasComoLeidas, deleteNotificacion, clearAll } = useNotificacionStore()
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'todas' | 'no_leidas'>('todas')
 
@@ -24,10 +23,8 @@ const NotificacionesPage: React.FC = () => {
     loadNotificaciones().then(() => setLoading(false))
   }, [])
 
-  const filteredNotificaciones = notificaciones.filter((n) => {
-    if (filter === 'no_leidas') return n.estado === 'NO_LEIDA'
-    return true
-  })
+  const filtered = notificaciones.filter(n => filter === 'no_leidas' ? n.estado === 'NO_LEIDA' : true)
+  const unreadCount = notificaciones.filter(n => n.estado === 'NO_LEIDA').length
 
   const handleMarkAllAsRead = async () => {
     await marcarTodasComoLeidas()
@@ -35,162 +32,116 @@ const NotificacionesPage: React.FC = () => {
   }
 
   const handleClearAll = async () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar todas las notificaciones?')) {
+    if (window.confirm('¿Eliminar todas las notificaciones?')) {
       await clearAll()
-      toast.success('Todas las notificaciones eliminadas')
-    }
-  }
-
-  const getNotificacionIcon = (tipo: string): string => {
-    switch (tipo) {
-      case 'COINCIDENCIA':
-        return '🎯'
-      case 'RESOLUCION':
-        return '✅'
-      case 'ALERTA':
-        return '⚠️'
-      case 'INFORMACION':
-      default:
-        return 'ℹ️'
-    }
-  }
-
-  const getNotificacionTypeColor = (tipo: string): string => {
-    switch (tipo) {
-      case 'COINCIDENCIA':
-        return 'bg-purple-100 text-purple-800'
-      case 'RESOLUCION':
-        return 'bg-green-100 text-green-800'
-      case 'ALERTA':
-        return 'bg-red-100 text-red-800'
-      case 'INFORMACION':
-      default:
-        return 'bg-blue-100 text-blue-800'
+      toast.success('Notificaciones eliminadas')
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 fade-in max-w-3xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Notificaciones</h1>
-          <p className="text-gray-600 mt-1">
-            Mantente actualizado sobre tus reportes y coincidencias
+          <h1 className="text-2xl font-bold text-slate-900">Notificaciones</h1>
+          <p className="text-slate-500 text-sm mt-0.5">
+            {unreadCount > 0 ? `${unreadCount} sin leer` : 'Todo al día'}
           </p>
         </div>
         {notificaciones.length > 0 && (
           <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleMarkAllAsRead}
-            >
-              <FiCheckSquare size={18} />
-              Marcar todo como leído
+            <Button variant="secondary" size="sm" onClick={handleMarkAllAsRead}>
+              <FiCheckSquare size={14} /> Marcar leídas
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleClearAll}
-            >
-              <FiTrash2 size={18} />
-              Limpiar
+            <Button variant="danger" size="sm" onClick={handleClearAll}>
+              <FiTrash2 size={14} /> Limpiar todo
             </Button>
           </div>
         )}
       </div>
 
-      {/* Filters */}
-      <Card>
-        <div className="flex gap-2">
+      {/* Filter tabs */}
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+        {(['todas', 'no_leidas'] as const).map(tab => (
           <button
-            onClick={() => setFilter('todas')}
-            className={`px-4 py-2 rounded-lg font-semibold transition ${
-              filter === 'todas'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+            key={tab}
+            onClick={() => setFilter(tab)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+              filter === tab
+                ? 'bg-white text-primary-700 shadow-sm'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            Todas
+            {tab === 'todas' ? 'Todas' : 'No leídas'}
+            {tab === 'no_leidas' && unreadCount > 0 && (
+              <span className="ml-1.5 bg-primary-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {unreadCount}
+              </span>
+            )}
           </button>
-          <button
-            onClick={() => setFilter('no_leidas')}
-            className={`px-4 py-2 rounded-lg font-semibold transition ${
-              filter === 'no_leidas'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-            }`}
-          >
-            No Leídas
-          </button>
-        </div>
-      </Card>
+        ))}
+      </div>
 
-      {/* Notifications List */}
-      <div className="space-y-3">
+      {/* List */}
+      <div className="space-y-2">
         {loading ? (
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Cargando notificaciones...</p>
-            </div>
-          </div>
-        ) : filteredNotificaciones.length > 0 ? (
-          filteredNotificaciones.map((notificacion) => (
-            <Card
-              key={notificacion.id}
-              className={notificacion.estado === 'NO_LEIDA' ? 'bg-gray-50 border-2' : ''}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4 flex-1">
-                  {/* Icon */}
-                  <span className="text-3xl flex-shrink-0">
-                    {getNotificacionIcon(notificacion.tipo)}
-                  </span>
-
-                  {/* Content */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900">
-                        {notificacion.titulo}
-                      </h3>
-                      <Badge status={notificacion.tipo}>
-                        {notificacion.tipo}
-                      </Badge>
-                      {notificacion.estado === 'NO_LEIDA' && (
-                        <span className="w-2 h-2 bg-primary-600 rounded-full"></span>
-                      )}
-                    </div>
-                    <p className="text-gray-700 mb-2">{notificacion.mensaje}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatDistanceToNow(notificacion.fechaCreacion)}
-                    </p>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map(i => (
+              <Card key={i} className="animate-pulse">
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-slate-100 rounded w-1/2" />
+                    <div className="h-3 bg-slate-100 rounded w-3/4" />
                   </div>
                 </div>
+              </Card>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <Card className="text-center py-20">
+            <div className="text-6xl mb-4">📭</div>
+            <p className="text-slate-600 font-semibold text-lg">
+              {filter === 'no_leidas' ? 'Sin notificaciones no leídas' : 'Bandeja vacía'}
+            </p>
+            <p className="text-slate-400 text-sm mt-1">Te notificaremos cuando haya novedades</p>
+          </Card>
+        ) : (
+          filtered.map(n => (
+            <Card
+              key={n.id}
+              className={`transition-all ${n.estado === 'NO_LEIDA' ? 'border-l-4 border-l-primary-400 bg-primary-50/30' : ''}`}
+            >
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl
+                  ${n.tipo === 'COINCIDENCIA' ? 'bg-accent-50' :
+                    n.tipo === 'RESOLUCION'   ? 'bg-emerald-50' :
+                    n.tipo === 'ALERTA'       ? 'bg-red-50' : 'bg-primary-50'}`}>
+                  {TIPO_ICON[n.tipo] ?? 'ℹ️'}
+                </div>
 
-                {/* Action */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                    <p className="font-semibold text-slate-800 text-sm">{n.titulo}</p>
+                    <Badge status={n.tipo}>{n.tipo}</Badge>
+                    {n.estado === 'NO_LEIDA' && (
+                      <span className="w-2 h-2 bg-primary-500 rounded-full" />
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-600 mb-1">{n.mensaje}</p>
+                  <p className="text-xs text-slate-400">{formatDistanceToNow(n.fechaCreacion)}</p>
+                </div>
+
                 <button
-                  onClick={() => deleteNotificacion(notificacion.id)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition flex-shrink-0"
+                  onClick={() => deleteNotificacion(n.id)}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition flex-shrink-0 text-slate-400 hover:text-red-500"
                   title="Eliminar"
                 >
-                  <FiTrash2 size={18} className="text-gray-400" />
+                  <FiTrash2 size={16} />
                 </button>
               </div>
             </Card>
           ))
-        ) : (
-          <Card>
-            <div className="text-center py-12">
-              <p className="text-4xl mb-4">📭</p>
-              <p className="text-gray-500 text-lg">
-                {filter === 'no_leidas'
-                  ? 'No hay notificaciones no leídas'
-                  : 'No hay notificaciones'}
-              </p>
-            </div>
-          </Card>
         )}
       </div>
     </div>
