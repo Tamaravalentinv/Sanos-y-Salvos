@@ -20,11 +20,7 @@ public class SecurityConfig {
             .csrf().disable()
             .cors().and()
             .authorizeExchange()
-                .pathMatchers("/api/users/register", "/api/users/username/**").permitAll()
-                .pathMatchers("/api/organizations/**").permitAll()
-                .pathMatchers("/api/reports/**", "/api/map/**", "/api/matches/**", "/api/notifications/**").permitAll()
-                .pathMatchers("/api/bff/**").permitAll()
-                .anyExchange().authenticated()
+                .anyExchange().permitAll()
             .and()
             .logout().logoutUrl("/api/auth/logout");
 
