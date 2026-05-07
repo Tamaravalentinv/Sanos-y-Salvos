@@ -28,8 +28,6 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
 - [x] BFF (Backend For Frontend) - Estructura validada
   - Código fuente organizado en `/api-gateway/src/`
   - Archivos de configuración presentes (pom.xml, Dockerfile, application.properties)
-  - README.md con instrucciones claras de instalación y ejecución
-  - Documentación profesional sin emojis
 
 - [x] Microservicios - Estructura validada (6 servicios)
   - MS Autenticación - Código organizado, configuración, README.md
@@ -39,19 +37,18 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
   - MS Proyectos - Código organizado, configuración, README.md
   - MS Coincidencias - Código organizado, configuración, README.md
   - Todos con instrucciones de ejecución y testing
-  - Documentación profesional sin emojis
+
 
 - [x] Arquetipos Maven - Estructura validada
   - Plantillas base para nuevos microservicios
   - pom.xml configurado
   - README.md con guía de uso
-  - Documentación profesional sin emojis
+
 
 - [x] Documentación generada
   - ANALISIS_PATRONES_ARQUETIPOS.md - Análisis de patrones y arquetipos
   - PLAN_BRANCHING.md - Estrategia de branching Git
   - repositorios.txt - Enlaces y descripciones de repositorios
-  - Todas sin emojis
 
 ### Resumen de Componentes
 
