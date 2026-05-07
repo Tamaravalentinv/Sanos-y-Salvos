@@ -43,6 +43,14 @@
         <module>sanos-microservice-archetype</module>
     </modules>
 
+    <dependencies>
+        <!-- Actuator - inherited by all microservices for health checks -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+
     <dependencyManagement>
         <dependencies>
             <!-- Spring Cloud -->

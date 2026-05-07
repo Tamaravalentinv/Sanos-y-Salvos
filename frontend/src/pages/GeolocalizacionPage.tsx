@@ -1,149 +1,216 @@
 import React, { useEffect, useState } from 'react'
-import { FiMapPin, FiAlertTriangle, FiFilter } from 'react-icons/fi'
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup, useMapEvents } from 'react-leaflet'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import { useNavigate } from 'react-router-dom'
+import { FiMapPin, FiAlertTriangle, FiPlus } from 'react-icons/fi'
 import Card from '@/components/Card'
-import Badge from '@/components/Badge'
-import Select from '@/components/Select'
+import Button from '@/components/Button'
 import { geolocalizacionService } from '@/services/geolocalizacion.service'
-import { HotspotIncidencia, ZonaIncidencia } from '@/types'
-import toast from 'react-hot-toast'
+import { reporteService } from '@/services/reporte.service'
+import { ZonaIncidencia, Reporte } from '@/types'
 
-const IntensityBar = ({ intensidad }: { intensidad: string }) => {
-  const w = intensidad === 'ALTA' ? 'w-full' : intensidad === 'MEDIA' ? 'w-2/3' : 'w-1/3'
-  const color = intensidad === 'ALTA' ? 'bg-red-500' : intensidad === 'MEDIA' ? 'bg-amber-500' : 'bg-emerald-500'
-  return (
-    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-      <div className={`h-full ${w} ${color} rounded-full transition-all`} />
-    </div>
-  )
+delete (L.Icon.Default.prototype as any)._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
+
+const makeIcon = (color: string) =>
+  L.divIcon({
+    html: `<div style="background:${color};width:22px;height:22px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35)"></div>`,
+    className: '',
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+    popupAnchor: [0, -14],
+  })
+
+const LOST_ICON = makeIcon('#ef4444')
+const FOUND_ICON = makeIcon('#22c55e')
+
+interface ClickPos { lat: number; lng: number }
+
+const MapClickCapture: React.FC<{ onMapClick: (lat: number, lng: number) => void }> = ({ onMapClick }) => {
+  useMapEvents({ click: (e) => onMapClick(e.latlng.lat, e.latlng.lng) })
+  return null
 }
 
 const GeolocalizacionPage: React.FC = () => {
-  const [hotspots, setHotspots] = useState<HotspotIncidencia[]>([])
+  const navigate = useNavigate()
   const [zonas, setZonas] = useState<ZonaIncidencia[]>([])
-  const [ciudades, setCiudades] = useState<string[]>([])
-  const [selectedCiudad, setSelectedCiudad] = useState<string>('')
+  const [reportes, setReportes] = useState<Reporte[]>([])
   const [loading, setLoading] = useState(true)
+  const [clickPos, setClickPos] = useState<ClickPos | null>(null)
 
-  useEffect(() => { loadData() }, [selectedCiudad])
+  useEffect(() => {
+    loadData()
+  }, [])
 
   const loadData = async () => {
     setLoading(true)
     try {
-      const [hotspotsData, zonasData, ciudadesData] = await Promise.all([
-        geolocalizacionService.getHotspotsIncidencia(selectedCiudad || undefined),
-        geolocalizacionService.getZonasIncidencia(selectedCiudad || undefined),
-        geolocalizacionService.getCiudadesConReportes(),
+      const [zonasData, reportesData] = await Promise.allSettled([
+        geolocalizacionService.getZonasIncidencia(),
+        reporteService.getAllReportes({ estado: 'ACTIVO', size: 100 }),
       ])
-      setHotspots(hotspotsData)
-      setZonas(zonasData)
-      setCiudades(ciudadesData)
-    } catch {
-      toast.error('Error al cargar datos de geolocalización')
+
+      if (zonasData.status === 'fulfilled') setZonas(zonasData.value)
+      if (reportesData.status === 'fulfilled') {
+        setReportes(
+          reportesData.value.content.filter(
+            (r) => r.ubicacion && (r.ubicacion.latitud !== 0 || r.ubicacion.longitud !== 0)
+          )
+        )
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  const ciudadOptions = ciudades.map(c => ({ value: c, label: c }))
+  const lost = reportes.filter((r) => r.tipo === 'PERDIDO')
+  const found = reportes.filter((r) => r.tipo === 'ENCONTRADO')
 
   return (
     <div className="space-y-5 fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Mapa de Incidencias</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Visualiza zonas con mayor concentración de reportes</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Mapa de Mascotas</h1>
+          <p className="text-slate-500 text-sm mt-0.5">
+            Haz clic en el mapa para crear un reporte ·{' '}
+            <span className="text-red-500 font-medium">● Perdidas</span>{' '}
+            <span className="text-emerald-500 font-medium">● Encontradas</span>
+          </p>
+        </div>
+        <Button variant="accent" size="sm" onClick={() => navigate('/reportes/crear')}>
+          <FiPlus size={14} /> Nuevo Reporte
+        </Button>
       </div>
 
-      {/* Filter */}
-      <Card padding="sm">
-        <div className="flex items-center gap-3">
-          <FiFilter size={16} className="text-slate-400 flex-shrink-0" />
-          <div className="flex-1">
-            <Select
-              label=""
-              value={selectedCiudad}
-              onChange={e => setSelectedCiudad(e.target.value)}
-              options={ciudadOptions}
-              placeholder="Todas las ciudades"
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Leaflet Map */}
+        <div className="lg:col-span-2 space-y-2">
+          <div className="rounded-2xl overflow-hidden shadow-md border border-slate-200" style={{ height: 520 }}>
+            {loading ? (
+              <div className="h-full flex items-center justify-center bg-slate-50">
+                <div className="text-center">
+                  <div className="text-5xl mb-3">🗺️</div>
+                  <p className="text-slate-500 text-sm animate-pulse">Cargando mapa…</p>
+                </div>
+              </div>
+            ) : (
+              <MapContainer center={[-33.4489, -70.6693]} zoom={11} style={{ height: '100%', width: '100%' }}>
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapClickCapture onMapClick={(lat, lng) => setClickPos({ lat, lng })} />
+
+                {/* Report markers */}
+                {reportes.map((r) => (
+                  <Marker
+                    key={r.id}
+                    position={[r.ubicacion.latitud, r.ubicacion.longitud]}
+                    icon={r.tipo === 'PERDIDO' ? LOST_ICON : FOUND_ICON}
+                  >
+                    <Popup>
+                      <div style={{ minWidth: 180 }}>
+                        <span style={{
+                          display: 'inline-block', padding: '2px 8px', borderRadius: 9999,
+                          fontSize: 11, fontWeight: 600, color: 'white', marginBottom: 6,
+                          background: r.tipo === 'PERDIDO' ? '#ef4444' : '#22c55e',
+                        }}>
+                          {r.tipo === 'PERDIDO' ? '😟 Perdida' : '😊 Encontrada'}
+                        </span>
+                        <p style={{ fontWeight: 700, fontSize: 13, margin: '0 0 2px' }}>{r.mascota?.nombre}</p>
+                        <p style={{ fontSize: 11, color: '#64748b', margin: '0 0 2px' }}>
+                          {r.mascota?.especie} · {r.mascota?.raza}
+                        </p>
+                        <p style={{ fontSize: 11, color: '#64748b', margin: '0 0 8px' }}>📍 {r.ubicacion?.ciudad}</p>
+                        <button
+                          onClick={() => navigate(`/reportes/${r.id}`)}
+                          style={{
+                            width: '100%', background: '#3b82f6', color: 'white', border: 'none',
+                            borderRadius: 8, padding: '6px 0', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                          }}
+                        >
+                          Ver detalles →
+                        </button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+
+                {/* Zone circles */}
+                {zonas.map((z) =>
+                  z.latitud && z.longitud ? (
+                    <CircleMarker
+                      key={z.id}
+                      center={[z.latitud, z.longitud]}
+                      radius={Math.min(20, 8 + z.cantidadReportesActivos)}
+                      fillColor="#f59e0b"
+                      color="white"
+                      weight={2}
+                      fillOpacity={0.3}
+                    >
+                      <Popup>
+                        <div>
+                          <p style={{ fontWeight: 700, fontSize: 13, margin: '0 0 2px' }}>{z.nombre}</p>
+                          <p style={{ fontSize: 11, color: '#64748b' }}>{z.cantidadReportesActivos} incidencias</p>
+                          <p style={{ fontSize: 11, color: '#64748b' }}>Radio: {z.radio} km</p>
+                        </div>
+                      </Popup>
+                    </CircleMarker>
+                  ) : null
+                )}
+
+                {/* Click popup */}
+                {clickPos && (
+                  <Popup
+                    position={[clickPos.lat, clickPos.lng]}
+                    eventHandlers={{ remove: () => setClickPos(null) }}
+                  >
+                    <div style={{ minWidth: 190 }}>
+                      <p style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>
+                        📍 {clickPos.lat.toFixed(5)}, {clickPos.lng.toFixed(5)}
+                      </p>
+                      <button
+                        onClick={() => navigate(`/reportes/crear?lat=${clickPos.lat}&lng=${clickPos.lng}`)}
+                        style={{
+                          width: '100%', background: '#f59e0b', color: 'white', border: 'none',
+                          borderRadius: 8, padding: '7px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                        }}
+                      >
+                        + Crear reporte aquí
+                      </button>
+                    </div>
+                  </Popup>
+                )}
+              </MapContainer>
+            )}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-4 flex-wrap text-xs text-slate-500 px-1">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500" /> Perdida
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-emerald-500" /> Encontrada
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-amber-400 opacity-50" /> Zona de incidencia
+            </div>
+            <span className="text-slate-400">· Clic en el mapa para crear un reporte</span>
           </div>
         </div>
-      </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Map placeholder */}
-        <div className="lg:col-span-2">
-          <Card padding="none" className="h-[500px] overflow-hidden relative">
-            {/* Decorative map background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-sky-50 to-primary-100">
-              {/* Grid lines */}
-              <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#0ea5e9" strokeWidth="0.5"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-              </svg>
-            </div>
-
-            {/* Hotspot dots */}
-            {!loading && hotspots.map((h, i) => (
-              <div
-                key={h.id}
-                className="absolute"
-                style={{
-                  left: `${15 + (i * 18) % 70}%`,
-                  top: `${20 + (i * 23) % 60}%`,
-                }}
-              >
-                <div className={`relative w-8 h-8 rounded-full flex items-center justify-center shadow-lg
-                  ${h.intensidad === 'ALTA' ? 'bg-red-500' : h.intensidad === 'MEDIA' ? 'bg-amber-500' : 'bg-emerald-500'}`}>
-                  <FiMapPin size={14} className="text-white" />
-                  {h.intensidad === 'ALTA' && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping" />
-                  )}
-                </div>
-                <div className="mt-1 bg-white rounded-lg px-2 py-0.5 shadow text-xs font-semibold text-slate-700 whitespace-nowrap">
-                  {h.ciudad}
-                </div>
-              </div>
-            ))}
-
-            {/* Center content */}
-            <div className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none">
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-lg flex items-center gap-3">
-                <span className="text-2xl">🗺️</span>
-                <div>
-                  <p className="font-semibold text-slate-800 text-sm">Mapa Interactivo</p>
-                  <p className="text-xs text-slate-500">
-                    {loading ? 'Cargando datos…' : `${hotspots.length} hotspots · ${zonas.length} zonas de riesgo`}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow text-xs space-y-1.5">
-              {[
-                { label: 'Alta intensidad', color: 'bg-red-500' },
-                { label: 'Media intensidad', color: 'bg-amber-500' },
-                { label: 'Baja intensidad', color: 'bg-emerald-500' },
-              ].map(item => (
-                <div key={item.label} className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${item.color}`} />
-                  <span className="text-slate-600">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* Data sidebar */}
-        <div className="space-y-4 overflow-y-auto max-h-[500px] pr-0.5">
+        {/* Sidebar */}
+        <div className="space-y-4 overflow-y-auto max-h-[540px] pr-0.5">
           {loading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map(i => (
+              {[1, 2, 3].map((i) => (
                 <Card key={i} className="animate-pulse">
                   <div className="h-20 bg-slate-100 rounded-xl" />
                 </Card>
@@ -151,32 +218,37 @@ const GeolocalizacionPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Hotspots */}
-              {hotspots.length > 0 && (
-                <Card>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center">
-                      <FiMapPin size={14} className="text-red-500" />
+              {/* Summary */}
+              <Card>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <FiMapPin size={14} className="text-primary-500" />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm">Reportes activos</h3>
+                </div>
+                {reportes.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-4">
+                    No hay reportes activos aún.<br />
+                    <button
+                      onClick={() => navigate('/reportes/crear')}
+                      className="text-primary-500 font-semibold hover:underline mt-1"
+                    >
+                      + Crear el primero
+                    </button>
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-red-50 rounded-xl p-2.5 text-center">
+                      <p className="text-xl font-bold text-red-600">{lost.length}</p>
+                      <p className="text-xs text-red-500 font-medium">Perdidas</p>
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm">Hotspots</h3>
+                    <div className="bg-emerald-50 rounded-xl p-2.5 text-center">
+                      <p className="text-xl font-bold text-emerald-600">{found.length}</p>
+                      <p className="text-xs text-emerald-500 font-medium">Encontradas</p>
+                    </div>
                   </div>
-                  <div className="space-y-3">
-                    {hotspots.map(h => (
-                      <div key={h.id} className="p-3 bg-slate-50 rounded-xl">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <p className="font-semibold text-slate-800 text-sm">{h.ciudad}</p>
-                          <Badge status={h.intensidad}>{h.intensidad}</Badge>
-                        </div>
-                        <IntensityBar intensidad={h.intensidad} />
-                        <div className="mt-2 text-xs text-slate-500 space-y-0.5">
-                          <p>📊 {h.cantidadReportes} reportes</p>
-                          {h.especiesComunes.length > 0 && <p>🐾 {h.especiesComunes.join(', ')}</p>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
+                )}
+              </Card>
 
               {/* Zones */}
               {zonas.length > 0 && (
@@ -185,30 +257,32 @@ const GeolocalizacionPage: React.FC = () => {
                     <div className="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center">
                       <FiAlertTriangle size={14} className="text-amber-500" />
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm">Zonas de Riesgo</h3>
+                    <h3 className="font-bold text-slate-800 text-sm">Zonas de Incidencia</h3>
                   </div>
-                  <div className="space-y-3">
-                    {zonas.map(z => (
-                      <div key={z.id} className="p-3 bg-slate-50 rounded-xl">
-                        <p className="font-semibold text-slate-800 text-sm mb-1">{z.nombre}</p>
-                        <div className="text-xs text-slate-500 space-y-0.5">
-                          <p>📏 Radio: {z.radio} km</p>
-                          <p>⚠️ {z.cantidadReportesActivos} reportes activos</p>
-                          <p>📍 {z.latitud.toFixed(4)}, {z.longitud.toFixed(4)}</p>
-                        </div>
+                  <div className="space-y-2">
+                    {zonas.map((z) => (
+                      <div key={z.id} className="p-2.5 bg-slate-50 rounded-xl">
+                        <p className="font-semibold text-slate-800 text-xs mb-1">{z.nombre}</p>
+                        <p className="text-xs text-slate-500">
+                          📏 Radio: {z.radio} km · ⚠️ {z.cantidadReportesActivos} incidencias
+                        </p>
                       </div>
                     ))}
                   </div>
                 </Card>
               )}
 
-              {hotspots.length === 0 && zonas.length === 0 && (
-                <Card className="text-center py-12">
-                  <div className="text-5xl mb-3">📍</div>
-                  <p className="text-slate-500 font-medium text-sm">Sin datos disponibles</p>
-                  <p className="text-slate-400 text-xs mt-1">Prueba con otra ciudad</p>
-                </Card>
-              )}
+              {/* Instructions */}
+              <Card className="bg-primary-50 border-primary-100">
+                <p className="text-xs font-semibold text-primary-700 mb-2">¿Cómo usar el mapa?</p>
+                <ul className="text-xs text-primary-600 space-y-1.5">
+                  <li>🖱️ Haz clic en cualquier punto del mapa</li>
+                  <li>📌 Selecciona "Crear reporte aquí"</li>
+                  <li>🐾 Las coordenadas se llenan automáticamente</li>
+                  <li>🔴 Marcadores rojos = mascotas perdidas</li>
+                  <li>🟢 Marcadores verdes = mascotas encontradas</li>
+                </ul>
+              </Card>
             </>
           )}
         </div>

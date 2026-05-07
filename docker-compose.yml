@@ -146,6 +146,58 @@ services:
       timeout: 10s
       retries: 3
 
+  # MS Proyectos (Port 8086)
+  ms-proyectos:
+    build:
+      context: .
+      dockerfile: ms-proyectos/Dockerfile
+    container_name: ms-proyectos
+    environment:
+      SPRING_DATASOURCE_URL: ${PROYECTOS_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${PROYECTOS_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${PROYECTOS_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MS Recursos Humanos (Port 8087)
+  ms-recursos-humanos:
+    build:
+      context: .
+      dockerfile: ms-recursos-humanos/Dockerfile
+    container_name: ms-recursos-humanos
+    environment:
+      SPRING_DATASOURCE_URL: ${RH_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${RH_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${RH_DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8087:8087"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sanos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # API Gateway BFF (Port 8080)
   api-gateway:
     build:
@@ -162,6 +214,8 @@ services:
       - ms-geolocalizacion
       - ms-coincidencias
       - ms-notificaciones
+      - ms-proyectos
+      - ms-recursos-humanos
     networks:
       - sanos-network
     healthcheck:

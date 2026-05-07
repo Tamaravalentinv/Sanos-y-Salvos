@@ -1,6 +1,14 @@
+# Stage 1: Build
+FROM maven:3.9 AS builder
+WORKDIR /build
+COPY . .
+WORKDIR /build/ms-proyectos
+RUN mvn dependency:go-offline
+RUN mvn clean package -DskipTests
+
+# Stage 2: Runtime
 FROM eclipse-temurin:17
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
-COPY ms-proyectos/target/ms-proyectos-*.jar app.jar
+COPY --from=builder /build/ms-proyectos/target/*.jar app.jar
 EXPOSE 8086
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,5 +1,91 @@
 import api from './api.client'
-import { Reporte } from '@/types'
+import { Reporte, Mascota, UbicacionReporte } from '@/types'
+
+// Backend shape
+interface BackendMascota {
+  id: number
+  nombre: string
+  tipo: string
+  raza: string
+  color: string
+  caracteristica?: { descripcion?: string; tamanio?: string }
+  fotos?: { url: string }[]
+}
+
+interface BackendReporte {
+  id: number
+  tipo: 'PERDIDA' | 'ENCONTRADA'
+  estado: 'ABIERTO' | 'EN_PROGRESO' | 'RESUELTO' | 'CERRADO'
+  usuarioId: number
+  mascota: BackendMascota
+  ubicacion?: string
+  latitud?: number
+  longitud?: number
+  fechaCreacion?: string
+  fechaIncidente?: string
+  descripcion?: string
+  telefonoContacto?: string
+  emailContacto?: string
+}
+
+function mapTipo(t: string): 'PERDIDO' | 'ENCONTRADO' {
+  return t === 'PERDIDA' ? 'PERDIDO' : 'ENCONTRADO'
+}
+
+function mapEstado(e: string): 'ACTIVO' | 'RESUELTO' | 'CANCELADO' {
+  if (e === 'RESUELTO') return 'RESUELTO'
+  if (e === 'CERRADO') return 'CANCELADO'
+  return 'ACTIVO'
+}
+
+function mapEspecie(tipo: string): 'PERRO' | 'GATO' | 'OTRO' {
+  const t = tipo?.toUpperCase() ?? ''
+  if (t === 'PERRO') return 'PERRO'
+  if (t === 'GATO') return 'GATO'
+  return 'OTRO'
+}
+
+function mapTamaño(tamanio?: string): 'PEQUEÑO' | 'MEDIANO' | 'GRANDE' {
+  const t = tamanio?.toUpperCase() ?? ''
+  if (t === 'PEQUEÑO' || t === 'PEQUEÑO') return 'PEQUEÑO'
+  if (t === 'GRANDE') return 'GRANDE'
+  return 'MEDIANO'
+}
+
+function mapReporte(r: BackendReporte): Reporte {
+  const mascota: Mascota = {
+    id: String(r.mascota?.id ?? ''),
+    nombre: r.mascota?.nombre ?? 'Sin nombre',
+    especie: mapEspecie(r.mascota?.tipo ?? ''),
+    raza: r.mascota?.raza ?? '',
+    color: r.mascota?.color ?? '',
+    tamaño: mapTamaño(r.mascota?.caracteristica?.tamanio),
+    señas_particulares: r.mascota?.caracteristica?.descripcion,
+    fotografia: r.mascota?.fotos?.[0]?.url,
+  }
+
+  const ubicacion: UbicacionReporte = {
+    id: '',
+    latitud: r.latitud ?? 0,
+    longitud: r.longitud ?? 0,
+    direccion: r.ubicacion ?? '',
+    ciudad: r.ubicacion ?? '',
+    pais: 'Chile',
+  }
+
+  return {
+    id: String(r.id),
+    titulo: `${r.tipo === 'PERDIDA' ? 'Perdido' : 'Encontrado'}: ${r.mascota?.nombre ?? ''}`,
+    descripcion: r.descripcion ?? '',
+    tipo: mapTipo(r.tipo),
+    estado: mapEstado(r.estado),
+    mascota,
+    ubicacion,
+    usuarioId: String(r.usuarioId),
+    fechaReporte: r.fechaCreacion ?? r.fechaIncidente ?? new Date().toISOString(),
+  }
+}
+
 
 export const reporteService = {
   getAllReportes: async (filtros?: {
@@ -9,65 +95,80 @@ export const reporteService = {
     page?: number
     size?: number
   }): Promise<{ content: Reporte[]; totalElements: number; totalPages: number }> => {
-    const response = await api.get('/reportes', { params: filtros })
-    return response.data
+    let endpoint = '/reports'
+
+    if (filtros?.estado === 'ACTIVO' && !filtros?.tipo) {
+      endpoint = '/reports/estado/activos'
+    } else if (filtros?.tipo === 'PERDIDO' && !filtros?.estado) {
+      endpoint = '/reports/tipo/perdidos'
+    } else if (filtros?.tipo === 'ENCONTRADO' && !filtros?.estado) {
+      endpoint = '/reports/tipo/encontrados'
+    }
+
+    const response = await api.get<BackendReporte[]>(endpoint)
+    let reportes = response.data.map(mapReporte)
+
+    // Client-side filtering
+    if (filtros?.tipo && endpoint === '/reports') {
+      reportes = reportes.filter((r) => r.tipo === filtros.tipo)
+    }
+    if (filtros?.estado && endpoint !== '/reports/estado/activos') {
+      reportes = reportes.filter((r) => r.estado === filtros.estado)
+    }
+    if (filtros?.ciudad) {
+      reportes = reportes.filter((r) =>
+        r.ubicacion.ciudad?.toLowerCase().includes(filtros.ciudad!.toLowerCase())
+      )
+    }
+
+    const size = filtros?.size ?? 12
+    const page = filtros?.page ?? 0
+    const start = page * size
+    const paged = reportes.slice(start, start + size)
+
+    return { content: paged, totalElements: reportes.length, totalPages: Math.ceil(reportes.length / size) }
   },
 
   getReporteById: async (id: string): Promise<Reporte> => {
-    const response = await api.get<Reporte>(`/reportes/${id}`)
-    return response.data
+    const response = await api.get<BackendReporte>(`/reports/${id}`)
+    return mapReporte(response.data)
   },
 
-  createReporte: async (data: Omit<Reporte, 'id' | 'fechaReporte'>): Promise<Reporte> => {
-    const response = await api.post<Reporte>('/reportes', data)
-    return response.data
-  },
-
-  updateReporte: async (id: string, data: Partial<Reporte>): Promise<Reporte> => {
-    const response = await api.put<Reporte>(`/reportes/${id}`, data)
-    return response.data
-  },
-
-  deleteReporte: async (id: string): Promise<void> => {
-    await api.delete(`/reportes/${id}`)
+  createReporte: async (data: any): Promise<Reporte> => {
+    const body = {
+      tipoReporte: data.tipo === 'PERDIDO' ? 'PERDIDA' : 'ENCONTRADA',
+      usuarioId: parseInt(data.usuarioId) || 1,
+      nombreMascota: data.mascota?.nombre ?? '',
+      tipo: data.mascota?.especie ?? 'PERRO',
+      raza: data.mascota?.raza ?? '',
+      color: data.mascota?.color ?? '',
+      tamanio: data.mascota?.tamaño ?? 'MEDIANO',
+      señasParticulares: data.mascota?.señas_particulares ?? '',
+      ubicacion: [data.ubicacion?.ciudad, data.ubicacion?.direccion]
+        .filter(Boolean)
+        .join(', '),
+      latitud: data.ubicacion?.latitud ?? 0,
+      longitud: data.ubicacion?.longitud ?? 0,
+      descripcion: data.descripcion ?? '',
+      emailContacto: `reporte_${Date.now()}@sanos.cl`,
+    }
+    const response = await api.post<BackendReporte>('/reports', body)
+    return mapReporte(response.data)
   },
 
   getReportesByUsuario: async (usuarioId: string): Promise<Reporte[]> => {
-    const response = await api.get<Reporte[]>(`/reportes/usuario/${usuarioId}`)
-    return response.data
+    const response = await api.get<BackendReporte[]>(`/reports/usuario/${usuarioId}`)
+    return response.data.map(mapReporte)
   },
 
-  resolverReporte: async (
-    id: string,
-    detallesResolucion: string
-  ): Promise<Reporte> => {
-    const response = await api.put<Reporte>(`/reportes/${id}/resolver`, {
-      detallesResolucion,
+  resolverReporte: async (id: string): Promise<Reporte> => {
+    const response = await api.patch<BackendReporte>(`/reports/${id}/estado`, null, {
+      params: { nuevoEstado: 'RESUELTO' },
     })
-    return response.data
+    return mapReporte(response.data)
   },
 
-  subirImagenReporte: async (reporteId: string, archivo: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('file', archivo)
-    const response = await api.post<{ url: string }>(
-      `/reportes/${reporteId}/imagen`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
-    )
-    return response.data.url
-  },
-
-  buscarReportesCercanos: async (
-    latitud: number,
-    longitud: number,
-    radiusKm: number
-  ): Promise<Reporte[]> => {
-    const response = await api.get<Reporte[]>('/reportes/cercanos', {
-      params: { latitud, longitud, radiusKm },
-    })
-    return response.data
+  deleteReporte: async (id: string): Promise<void> => {
+    await api.delete(`/reports/${id}`)
   },
 }

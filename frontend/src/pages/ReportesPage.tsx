@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { FiPlus, FiFilter, FiX } from 'react-icons/fi'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
@@ -26,6 +26,7 @@ const ReportesPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '0'))
+  const navigate = useNavigate()
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ tipo: '', estado: '', ciudad: '' })
 
@@ -118,7 +119,12 @@ const ReportesPage: React.FC = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {reportes.map(r => (
-              <Card key={r.id} hover className="flex flex-col">
+              <Card
+                key={r.id}
+                hover
+                className="flex flex-col cursor-pointer"
+                onClick={() => navigate(`/reportes/${r.id}`)}
+              >
                 {/* Image or gradient placeholder */}
                 <div className="relative mb-4 overflow-hidden rounded-xl">
                   {r.mascota?.fotografia ? (
@@ -151,12 +157,8 @@ const ReportesPage: React.FC = () => {
                   <p className="text-xs text-slate-400 mb-3">📅 {formatDate(r.fechaReporte)}</p>
 
                   {r.descripcion && (
-                    <p className="text-xs text-slate-600 line-clamp-2 mb-3">{r.descripcion}</p>
+                    <p className="text-xs text-slate-600 line-clamp-2">{r.descripcion}</p>
                   )}
-
-                  <Link to={`/reportes/${r.id}`} className="mt-auto">
-                    <Button variant="primary" size="sm" className="w-full">Ver detalles</Button>
-                  </Link>
                 </div>
               </Card>
             ))}

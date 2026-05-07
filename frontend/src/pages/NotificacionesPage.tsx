@@ -39,7 +39,7 @@ const NotificacionesPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-5 fade-in max-w-3xl">
+    <div className="space-y-5 fade-in max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>

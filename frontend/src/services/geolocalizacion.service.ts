@@ -1,31 +1,48 @@
 import api from './api.client'
-import { HotspotIncidencia, ZonaIncidencia } from '@/types'
+import { ZonaIncidencia } from '@/types'
+
+// Backend ZonaIncidencia shape (from ms-geolocalizacion /hotzones)
+interface BackendZona {
+  id: number
+  nombre: string
+  latitudCentro: number
+  longitudCentro: number
+  radioKm: number
+  numIncidencias: number
+  numPerdidas: number
+  numEncontradas: number
+  nivelRiesgo: string
+  esActiva: boolean
+}
+
+function mapZona(z: BackendZona): ZonaIncidencia {
+  return {
+    id: String(z.id),
+    nombre: z.nombre,
+    latitud: z.latitudCentro,
+    longitud: z.longitudCentro,
+    radio: z.radioKm,
+    cantidadReportesActivos: z.numIncidencias,
+  }
+}
 
 export const geolocalizacionService = {
-  getHotspotsIncidencia: async (ciudad?: string): Promise<HotspotIncidencia[]> => {
-    const response = await api.get<HotspotIncidencia[]>('/geolocalizacion/hotspots', {
-      params: ciudad ? { ciudad } : undefined,
-    })
-    return response.data
+  getZonasIncidencia: async (): Promise<ZonaIncidencia[]> => {
+    try {
+      const response = await api.get<BackendZona[]>('/geolocalizacion/hotzones/activas')
+      return response.data.map(mapZona)
+    } catch {
+      return []
+    }
   },
 
-  getZonasIncidencia: async (ciudad?: string): Promise<ZonaIncidencia[]> => {
-    const response = await api.get<ZonaIncidencia[]>('/geolocalizacion/zonas', {
-      params: ciudad ? { ciudad } : undefined,
-    })
-    return response.data
-  },
-
-  getAnalisisUbicacion: async (
+  getUbicacionesCercanas: async (
     latitud: number,
-    longitud: number
-  ): Promise<{
-    hotspot: HotspotIncidencia | null
-    reportesCercanos: number
-    riesgo: 'BAJO' | 'MEDIO' | 'ALTO'
-  }> => {
-    const response = await api.get('/geolocalizacion/analisis', {
-      params: { latitud, longitud },
+    longitud: number,
+    radioKm = 5
+  ) => {
+    const response = await api.get('/geolocalizacion/cercania', {
+      params: { latitud, longitud, radioKm },
     })
     return response.data
   },
@@ -36,11 +53,6 @@ export const geolocalizacionService = {
       latitud,
       longitud,
     })
-    return response.data
-  },
-
-  getCiudadesConReportes: async (): Promise<string[]> => {
-    const response = await api.get<string[]>('/geolocalizacion/ciudades')
     return response.data
   },
 }
