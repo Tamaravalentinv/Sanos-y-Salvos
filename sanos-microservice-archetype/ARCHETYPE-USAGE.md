@@ -1,35 +1,17 @@
-# Sanos y Salvos Microservice Archetype
+# Guía de Uso del Arquetipo de Microservicios
 
-Archetype Maven personalizado para generar microservicios reutilizables en el proyecto Sanos y Salvos.
+Referencia rápida para usar el arquetipo Maven de Sanos y Salvos.
 
-## ¿Qué es?
+Ver [README.md](README.md) para documentación completa.
 
-Un Maven Archetype es una plantilla de proyecto que permite generar nuevos proyectos con una estructura predefinida, configuración y código base.
+## Instalación Rápida
 
-Este archetype está diseñado para crear microservicios Spring Boot que:
-- Se integran con Eureka Discovery
-- Usan Spring Data JPA para acceso a datos
-- Incluyen configuración de MySQL
-- Tienen endpoints de health check
-- Siguen estándares del proyecto
-
-## Instalación del Archetype
-
-### Opción 1: Instalar localmente
 ```bash
-# Desde la carpeta del archetype
 cd sanos-microservice-archetype
 mvn clean install
 ```
 
-### Opción 2: Instalar en repositorio corporativo
-```bash
-mvn deploy
-```
-
-## Uso
-
-### Generar un nuevo microservicio
+## Generar Microservicio (Comando Rápido)
 
 ```bash
 mvn archetype:generate \
@@ -37,22 +19,28 @@ mvn archetype:generate \
   -DarchetypeArtifactId=sanos-microservice-archetype \
   -DarchetypeVersion=1.0.0 \
   -DgroupId=com.sanosysalvos \
-  -DartifactId=ms-nuevo-servicio \
-  -Dname="Nuevo Microservicio" \
-  -Ddescription="Descripción del nuevo microservicio" \
-  -DdbName=sanosysalvos_nuevo \
-  -DserverPort=8086 \
-  -Dpackage=nuevo
+  -DartifactId=ms-mi-servicio \
+  -Dname="Mi Servicio" \
+  -Ddescription="Descripcion del servicio" \
+  -DdbName=sanosysalvos_mi_servicio \
+  -DserverPort=8088 \
+  -Dpackage=mi_servicio \
+  -DinteractiveMode=false
 ```
 
-### Parámetros:
-- `name`: Nombre del microservicio (ej: "Servicio de Pagos")
-- `description`: Descripción del servicio
-- `dbName`: Nombre de la base de datos MySQL (ej: sanosysalvos_pagos)
-- `serverPort`: Puerto donde corre el servicio (ej: 8086)
-- `package`: Nombre del paquete Java (ej: pagos)
+## Parámetros Requeridos
 
-## Ejemplos de Generación
+| Parámetro | Descripción | Ejemplo |
+|-----------|-------------|---------|
+| `-DgroupId` | Grupo del proyecto | `com.sanosysalvos` |
+| `-DartifactId` | ID del proyecto | `ms-mi-servicio` |
+| `-Dname` | Nombre legible | `Mi Servicio` |
+| `-Ddescription` | Descripción | `Descripcion del servicio` |
+| `-DdbName` | Nombre base de datos | `sanosysalvos_mi_servicio` |
+| `-DserverPort` | Puerto del servidor | `8088` |
+| `-Dpackage` | Paquete Java | `mi_servicio` |
+
+## Ejemplos
 
 ### Microservicio de Pagos
 ```bash
@@ -65,8 +53,9 @@ mvn archetype:generate \
   -Dname="Servicio de Pagos" \
   -Ddescription="Gestión de pagos y transacciones" \
   -DdbName=sanosysalvos_pagos \
-  -DserverPort=8086 \
-  -Dpackage=pagos
+  -DserverPort=8088 \
+  -Dpackage=pagos \
+  -DinteractiveMode=false
 ```
 
 ### Microservicio de Analytics
@@ -80,24 +69,37 @@ mvn archetype:generate \
   -Dname="Servicio de Analytics" \
   -Ddescription="Análisis de datos y reportes" \
   -DdbName=sanosysalvos_analytics \
-  -DserverPort=8087 \
-  -Dpackage=analytics
+  -DserverPort=8089 \
+  -Dpackage=analytics \
+  -DinteractiveMode=false
 ```
 
 ## Estructura Generada
 
-Cada proyecto creado con este archetype tendrá:
-
 ```
-ms-nuevo-servicio/
+ms-mi-servicio/
 ├── pom.xml
-├── src/
-│   ├── main/
-│   │   ├── java/com/sanosysalvos/nuevo/
-│   │   │   ├── NuevoApplication.java
-│   │   │   └── controller/
-│   │   │       └── HealthController.java
-│   │   └── resources/
+├── Dockerfile
+├── README.md
+├── .gitignore
+├── mvnw / mvnw.cmd
+└── src/
+    ├── main/
+    │   ├── java/com/sanosysalvos/mi_servicio/
+    │   │   ├── MsMiServicioApplication.java
+    │   │   ├── controller/
+    │   │   ├── service/
+    │   │   ├── repository/
+    │   │   ├── model/
+    │   │   ├── config/
+    │   │   ├── dto/
+    │   │   └── exception/
+    │   └── resources/
+    │       ├── application.properties
+    │       ├── application-dev.properties
+    │       ├── application-prod.properties
+    │       └── application-docker.properties
+    └── test/
 │   │       └── application.properties
 │   └── test/
 │       └── java/
@@ -163,4 +165,75 @@ Recuerda agregarlo al módulo principal en `pom.xml`:
 - Spring Boot 3.5.12
 - Maven 3.8.1+
 
+## Después de Generar
 
+### Compilar
+```bash
+cd ms-mi-servicio
+mvn clean install
+```
+
+### Ejecutar
+```bash
+# Opción 1: Maven
+mvn spring-boot:run
+
+# Opción 2: Java
+java -jar target/ms-mi-servicio-1.0-SNAPSHOT.jar
+```
+
+### Verificar
+```bash
+curl http://localhost:8088/health
+```
+
+**Respuesta esperada:**
+```
+Service is up
+```
+
+## Puertos Asignados
+
+Mantén el registro de puertos asignados:
+
+| Servicio | Puerto |
+|----------|--------|
+| Gateway/BFF | 8080 |
+| Geolocalizacion | 8081 |
+| Coincidencias | 8082 |
+| Reportes | 8083 |
+| Usuarios | 8084 |
+| Notificaciones | 8085 |
+| Proyectos | 8086 |
+| Recursos Humanos | 8087 |
+| Disponible | 8088+ |
+
+## Troubleshooting
+
+Si el comando genera error "Archetype not found":
+```bash
+# Asegurate de instalar primero
+cd sanos-microservice-archetype
+mvn clean install
+
+# Verifica que se instaló en local
+mvn archetype:list | grep sanos-microservice
+```
+
+Si el puerto está en uso:
+```bash
+# Windows
+netstat -ano | findstr :8088
+
+# Linux/Mac
+lsof -i :8088
+```
+
+## Convenciones
+
+- Nombres: ms-nombre-servicio
+- Paquetes: com.sanosysalvos.nombre
+- BD: sanosysalvos_nombre
+- Puertos: 8088+
+
+Ver [README.md](README.md) para documentación completa y ejemplos adicionales.

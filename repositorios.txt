@@ -1,0 +1,235 @@
+================================================================================
+SANOS Y SALVOS - ENLACES A REPOSITORIOS DE COMPONENTES
+================================================================================
+
+REPOSITORIO PRINCIPAL DEL PROYECTO
+==================================
+URL: [Repositorio principal - Sanos y Salvos]
+Descripción: Repositorio central que contiene la orquestación completa del 
+proyecto, incluyendo Docker Compose, scripts de deployment, configuraciones 
+de entorno, y referencias a todos los componentes.
+Contenido:
+  - docker-compose.yml (orquestación de servicios)
+  - Dockerfile.base (imagen base para contenedores)
+  - Scripts de deployment (up.sh, down.sh, health-check.sh)
+  - Configuración de base de datos (docker/init/)
+  - Documentación general del proyecto
+
+
+REPOSITORIOS DE COMPONENTES
+===========================
+
+1. FRONTEND
+-----------
+URL: [frontend - Sanos y Salvos]
+Ubicación Local: /frontend
+Descripción: Aplicación web desarrollada con React + TypeScript + Vite.
+Interfaz de usuario para el sistema de reportes y geolocalización.
+Contenido:
+  - Componentes React reutilizables (Button, Card, Input, Select, etc.)
+  - Páginas principales (Dashboard, Reportes, Mensajes, Notificaciones, etc.)
+  - Servicios API client (api.client.ts, auth.service.ts, etc.)
+  - Contexto global de estado (authStore, mensajeStore, notificacionStore)
+  - Configuración de Tailwind CSS y Vite
+  - Tipos TypeScript centralizados
+Tecnología: React 18+ | TypeScript | Vite | Tailwind CSS
+
+
+2. BFF - BACKEND FOR FRONTEND
+-----------------------------
+URL: [api-gateway - Sanos y Salvos]
+Ubicación Local: /api-gateway
+Descripción: Backend For Frontend que actúa como puerta de entrada única
+para el frontend. Realiza composición de servicios, orquestación y agregación
+de datos provenientes de los microservicios.
+Contenido:
+  - Código fuente Java/Spring Boot
+  - Controladores REST para endpoints del frontend
+  - Lógica de composición y orquestación
+  - Cliente HTTP para comunicación con microservicios
+  - Configuración de seguridad y autenticación
+  - Dockerfile para containerización
+Tecnología: Java | Spring Boot | Maven
+Puerto: 8080
+
+
+3. MICROSERVICIO: MS-AUTENTICACION
+------------------------------------
+URL: [ms-autenticacion - Sanos y Salvos]
+Ubicación Local: /ms-autenticacion
+Descripción: Microservicio responsable de autenticación, autorización y
+gestión de usuarios. Maneja tokens JWT, permisos de rol y acceso a recursos.
+Contenido:
+  - Lógica de autenticación (login, registro, validación)
+  - Gestión de usuarios y roles
+  - Generación y validación de JWT
+  - Controladores REST para endpoints de autenticación
+  - Bases de datos de usuarios
+Tecnología: Java | Spring Boot | JWT | Maven
+Puerto: [Configurado en application.properties]
+
+
+4. MICROSERVICIO: MS-GEOLOCALIZACION
+--------------------------------------
+URL: [ms-geolocalizacion - Sanos y Salvos]
+Ubicación Local: /ms-geolocalizacion
+Descripción: Microservicio que maneja toda la funcionalidad de geolocalización.
+Registra ubicaciones de usuarios, calcula distancias, y proporciona servicios
+de mapeo geográfico para el sistema de reportes.
+Contenido:
+  - Lógica de geolocalización
+  - Cálculo de coordenadas y distancias
+  - APIs de mapeo
+  - Integración con servicios de GPS
+  - Almacenamiento de datos de ubicación
+Tecnología: Java | Spring Boot | GIS APIs | Maven
+Puerto: [Configurado en application.properties]
+
+
+5. MICROSERVICIO: MS-REPORTES
+------------------------------
+URL: [ms-reportes - Sanos y Salvos]
+Ubicación Local: /ms-reportes
+Descripción: Microservicio central para la gestión de reportes médicos
+y administrativos. Maneja creación, consulta, actualización y validación
+de reportes en el sistema.
+Contenido:
+  - Lógica de creación y gestión de reportes
+  - Validación de datos de reportes
+  - Almacenamiento de reportes
+  - Generación de reportes PDF
+  - Consultas y filtrados de reportes
+Tecnología: Java | Spring Boot | MySQL | Maven
+Puerto: [Configurado en application.properties]
+
+
+6. MICROSERVICIO: MS-NOTIFICACIONES
+------------------------------------
+URL: [ms-notificaciones - Sanos y Salvos]
+Ubicación Local: /ms-notificaciones
+Descripción: Microservicio responsable del sistema de notificaciones.
+Envía alertas, recordatorios y avisos a usuarios mediante múltiples canales
+(email, push notifications, SMS).
+Contenido:
+  - Lógica de generación de notificaciones
+  - Integradores de canales (email, SMS, push)
+  - Gestión de preferencias de notificación
+  - Queue de notificaciones
+  - Registro y auditoría de envíos
+Tecnología: Java | Spring Boot | Message Queue | Maven
+Puerto: [Configurado en application.properties]
+
+
+7. MICROSERVICIO: MS-PROYECTOS
+-------------------------------
+URL: [ms-proyectos - Sanos y Salvos]
+Ubicación Local: /ms-proyectos
+Descripción: Microservicio para la gestión de proyectos administrativos.
+Permite crear, organizar y administrar proyectos relacionados con iniciativas
+sanitarias y de salud pública.
+Contenido:
+  - Gestión del ciclo de vida de proyectos
+  - Asignación de recursos a proyectos
+  - Seguimiento de estado y progreso
+  - Gestión de equipos de proyecto
+  - Reportes de proyecto
+Tecnología: Java | Spring Boot | Maven
+Puerto: [Configurado en application.properties]
+
+
+8. MICROSERVICIO: MS-RECURSOS-HUMANOS
+--------------------------------------
+URL: [ms-recursos-humanos - Sanos y Salvos]
+Ubicación Local: /ms-recursos-humanos
+Descripción: Microservicio de gestión de recursos humanos. Administra
+información de personal, perfiles, asignaciones y datos de empleados.
+Contenido:
+  - Gestión de perfiles de usuario
+  - Información de empleados
+  - Asignación de roles y responsabilidades
+  - Gestión de disponibilidad
+  - Datos de contacto y documentación
+Tecnología: Java | Spring Boot | Maven
+Puerto: [Configurado en application.properties]
+
+
+9. MICROSERVICIO: MS-COINCIDENCIAS
+-----------------------------------
+URL: [ms-coincidencias - Sanos y Salvos]
+Ubicación Local: /ms-coincidencias
+Descripción: Microservicio especializado en la detección y análisis de
+coincidencias. Identifica patrones, similitudes y correlaciones entre datos
+de diferentes reportes y usuarios.
+Contenido:
+  - Lógica de análisis de coincidencias
+  - Algoritmos de similitud
+  - Detección de patrones
+  - Alertas de coincidencias relevantes
+  - Integración con ms-geolocalizacion para coincidencias geográficas
+Tecnología: Java | Spring Boot | Machine Learning Libraries | Maven
+Puerto: [Configurado en application.properties]
+
+
+ARQUETIPOS MAVEN
+=================
+URL: [sanos-microservice-archetype - Sanos y Salvos]
+Ubicación Local: /sanos-microservice-archetype
+Descripción: Archetype Maven que proporciona una plantilla base para crear
+nuevos microservicios siguiendo los estándares del proyecto Sanos y Salvos.
+Incluye estructura de carpetas, dependencias comunes, y configuraciones
+predefinidas.
+Contenido:
+  - Estructura de proyecto Maven base
+  - Dependencias estándar (Spring Boot, JUnit, etc.)
+  - Configuración de application.properties
+  - Dockerfile plantilla
+  - Clases base y controladores de ejemplo
+  - POM.xml configurado
+
+Uso: mvn archetype:generate -DarchetypeGroupId=... -DarchetypeArtifactId=sanos-microservice-archetype
+
+
+BASE DE DATOS
+=============
+Descripción: Scripts de inicialización de base de datos MySQL
+Ubicación Local: /database/xampp_completo.sql
+Contenido:
+  - Esquemas de tablas para todos los microservicios
+  - Datos iniciales de ejemplo
+  - Configuración de usuarios y permisos de BD
+  - Relaciones entre entidades
+
+
+================================================================================
+NOTAS GENERALES
+================================================================================
+
+1. ESTRUCTURA DE REPOSITORIOS:
+   - Cada componente puede estar en su propio repositorio Git individual
+   - O pueden estar organizados en un monorepo con este repositorio principal
+
+2. CONVENCIONES DE PUERTO:
+   - BFF (api-gateway): 8080
+   - Microservicios: Configurados individualmente en application.properties
+   - Frontend: Puerto local configurado en vite.config.ts
+
+3. CONFIGURACION DE AMBIENTE:
+   - Todos los microservicios se despliegan mediante docker-compose.yml
+   - Las credenciales de BD están en docker/init/01-create-databases.sql
+
+4. DOCUMENTACION ADICIONAL:
+   - Cada componente contiene su propio README.md con instrucciones específicas
+   - Ver ANALISIS_PATRONES_ARQUETIPOS.md para patrones de arquitectura
+   - Ver PLAN_BRANCHING.md para estrategia de ramas Git
+
+================================================================================
+CONTACTO Y REFERENCIAS
+================================================================================
+
+Para más información sobre la arquitectura y desarrollo:
+- Consultar README.md en cada directorio de componente
+- Revisar la documentación de patrones de arquitectura
+- Contactar al equipo de desarrollo del proyecto
+
+Última actualización: Mayo 2026
+================================================================================

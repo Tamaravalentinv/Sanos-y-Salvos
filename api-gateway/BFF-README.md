@@ -1,10 +1,212 @@
-# 🎯 Backend for Frontend (BFF) - API Gateway
+# Backend for Frontend (BFF) - API Gateway
 
 ## Descripción
 
 El **Backend for Frontend (BFF)** es una capa de agregación de datos entre el frontend React y los microservicios backend. Optimiza las llamadas a API combinando datos de múltiples servicios en respuestas únicas.
 
 **Ubicación:** `api-gateway` en puerto `8080`
+
+---
+
+## Requisitos Previos
+
+- Java 11 o superior (recomendado Java 17 LTS)
+- Maven 3.6+
+- Docker Desktop (para ejecutar microservicios)
+- Git
+
+Verifica tu entorno:
+```bash
+java -version
+mvn -version
+docker --version
+```
+
+---
+
+## Instalación y Ejecución
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/tu-organizacion/sanos-y-salvos.git
+cd sanos-y-salvos/api-gateway
+```
+
+### 2. Construir el proyecto
+
+```bash
+# Con Maven (opción recomendada)
+mvn clean install
+
+# O usando el wrapper
+./mvnw clean install
+```
+
+### 3. Ejecutar en desarrollo
+
+```bash
+# Con Maven
+mvn spring-boot:run
+
+# O con Java directamente
+java -jar target/api-gateway-1.0.0.jar
+
+# O en IDE (Spring Boot App Run)
+# Click derecho en ApiGatewayApplication.java → Run
+```
+
+**El servidor iniciará en:** http://localhost:8080
+
+### 4. Verificar que está funcionando
+
+```bash
+curl http://localhost:8080/api/bff/health
+```
+
+**Respuesta esperada:**
+```json
+{
+  "status": "UP",
+  "timestamp": "2026-05-07T12:00:00Z"
+}
+```
+
+---
+
+## Ejecución con Docker
+
+### 1. Construir imagen Docker
+
+```bash
+docker build -t sanos-api-gateway:1.0.0 .
+```
+
+### 2. Ejecutar contenedor
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=docker \
+  --name api-gateway \
+  --network sanos-network \
+  sanos-api-gateway:1.0.0
+```
+
+### 3. O usar Docker Compose (desde raíz del proyecto)
+
+```bash
+cd ..
+docker-compose up -d api-gateway
+```
+
+---
+
+## Variables de Entorno
+
+Configura estas variables según tu entorno:
+
+| Variable | Valor Desarrollo | Valor Producción |
+|----------|------------------|------------------|
+| `SPRING_PROFILES_ACTIVE` | `dev` | `prod` |
+| `MS_USUARIOS_URL` | `http://localhost:8084` | `http://ms-usuarios:8084` |
+| `MS_REPORTES_URL` | `http://localhost:8083` | `http://ms-reportes:8083` |
+| `MS_GEOLOCALIZACION_URL` | `http://localhost:8081` | `http://ms-geolocalizacion:8081` |
+| `MS_COINCIDENCIAS_URL` | `http://localhost:8082` | `http://ms-coincidencias:8082` |
+| `MS_NOTIFICACIONES_URL` | `http://localhost:8085` | `http://ms-notificaciones:8085` |
+
+**Archivo: `application.properties`**
+```properties
+# Profile
+spring.profiles.active=dev
+
+# Server
+server.port=8080
+server.servlet.context-path=/
+
+# Microservices URLs
+ms.usuarios.url=http://localhost:8084
+ms.reportes.url=http://localhost:8083
+ms.geolocalizacion.url=http://localhost:8081
+ms.coincidencias.url=http://localhost:8082
+ms.notificaciones.url=http://localhost:8085
+
+# Timeouts
+bff.client.connection-timeout=5000
+bff.client.read-timeout=10000
+
+# Cache
+spring.cache.type=simple
+```
+
+---
+
+## Pruebas de Endpoints
+
+### Health Check
+```bash
+curl http://localhost:8080/api/bff/health
+```
+
+### Dashboard Agregado
+```bash
+curl "http://localhost:8080/api/bff/dashboard?userId=1" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Reporte Detallado
+```bash
+curl "http://localhost:8080/api/bff/reportes/1" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Crear Nuevo Reporte
+```bash
+curl -X POST "http://localhost:8080/api/bff/reportes" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "tipo": "PERDIDA",
+    "descripcion": "Perro perdido en Laureles",
+    "nombreMascota": "Max",
+    "especie": "Perro",
+    "raza": "Golden Retriever",
+    "color": "Dorado",
+    "ciudad": "Medellín",
+    "barrio": "Laureles",
+    "direccion": "Cra 43A #32-65",
+    "latitud": 6.209,
+    "longitud": -75.569,
+    "telefono": "+573001234567",
+    "email": "usuario@example.com"
+  }'
+```
+
+### Ver Coincidencias
+```bash
+curl "http://localhost:8080/api/bff/coincidencias?userId=1" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+---
+
+## Logs y Debugging
+
+### Ver logs en tiempo real
+```bash
+# Desarrollo
+tail -f logs/api-gateway.log
+
+# Docker
+docker logs -f api-gateway
+```
+
+### Nivel de log (application.properties)
+```properties
+logging.level.root=INFO
+logging.level.com.sanosysalvos=DEBUG
+logging.level.org.springframework.cloud.gateway=TRACE
+```
 
 ---
 
@@ -167,10 +369,10 @@ Content-Type: application/json
 ```
 
 **Proceso BFF:**
-1. ✅ Crea mascota en MS Reportes
-2. ✅ Crea ubicación en MS Geolocalización
-3. ✅ Crea reporte en MS Reportes
-4. ✅ Envía notificación en MS Notificaciones
+1. Crea mascota en MS Reportes
+2. Crea ubicación en MS Geolocalización
+3. Crea reporte en MS Reportes
+4. Envía notificación en MS Notificaciones
 
 **Respuesta:**
 ```json
@@ -220,24 +422,24 @@ GET /api/bff/coincidencias?userId=1
 
 ## Características Implementadas
 
-### ✅ Agregación de Datos
+### Agregación de Datos
 - Combina información de múltiples microservicios
 - Una sola llamada al backend para obtener todo lo necesario
 
-### ✅ Transformación de Datos
+### Transformación de Datos
 - Adapta respuestas al formato esperado por el frontend
 - DTOs especializados para cada caso de uso
 
-### ✅ Caching
+### Caching
 - Reduce latencia y carga en microservicios
 - TTL configurable por tipo de datos
 - En producción: usar Redis
 
-### ✅ Transacciones Distribuidas
+### Transacciones Distribuidas
 - Endpoint `/api/bff/reportes` coordina múltiples servicios
 - Rollback automático en caso de error
 
-### ✅ Error Handling
+### Error Handling
 - Fallback graceful si un microservicio falla
 - Logging completo de operaciones
 
