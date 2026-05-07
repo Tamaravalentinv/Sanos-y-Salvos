@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +32,17 @@ public class ReporteController {
             // Crear características si existen
             if (request.getCaracteristica() != null) {
                 mascota.setCaracteristica(request.getCaracteristica());
+            }
+
+            // Agregar foto si viene en base64
+            if (request.getFotoBase64() != null && !request.getFotoBase64().isBlank()) {
+                FotoMascota foto = new FotoMascota();
+                foto.setUrlFoto(request.getFotoBase64());
+                foto.setEsPrincipal(true);
+                foto.setOrden(0);
+                List<FotoMascota> fotos = new ArrayList<>();
+                fotos.add(foto);
+                mascota.setFotos(fotos);
             }
 
             // Crear reporte
@@ -161,6 +173,7 @@ public class ReporteController {
         private String descripcion;
         private String telefonoContacto;
         private String emailContacto;
+        private String fotoBase64;
 
         // Getters
         public TipoReporte getTipoReporte() { return tipoReporte; }
@@ -177,5 +190,6 @@ public class ReporteController {
         public String getDescripcion() { return descripcion; }
         public String getTelefonoContacto() { return telefonoContacto; }
         public String getEmailContacto() { return emailContacto; }
+        public String getFotoBase64() { return fotoBase64; }
     }
 }

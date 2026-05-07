@@ -1,14 +1,10 @@
 import React, { useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const location = useLocation()
-
-  const isFullWidth =
-    location.pathname === '/mapa' || location.pathname === '/notificaciones'
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -21,11 +17,7 @@ const Layout: React.FC = () => {
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
         {/* Page Content */}
-        <main
-          className={`flex-1 overflow-auto ${
-            isFullWidth ? 'p-0' : 'p-4 md:p-6'
-          }`}
-        >
+        <main className="flex-1 overflow-auto p-4 md:p-6">
           <Outlet />
         </main>
       </div>

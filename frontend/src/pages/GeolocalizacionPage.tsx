@@ -52,14 +52,17 @@ const GeolocalizacionPage: React.FC = () => {
     try {
       const [zonasData, reportesData] = await Promise.allSettled([
         geolocalizacionService.getZonasIncidencia(),
-        reporteService.getAllReportes({ estado: 'ACTIVO', size: 100 }),
+        reporteService.getAllReportes({ size: 200 }),
       ])
 
       if (zonasData.status === 'fulfilled') setZonas(zonasData.value)
       if (reportesData.status === 'fulfilled') {
         setReportes(
           reportesData.value.content.filter(
-            (r) => r.ubicacion && (r.ubicacion.latitud !== 0 || r.ubicacion.longitud !== 0)
+            (r) =>
+              r.estado === 'ACTIVO' &&
+              r.ubicacion &&
+              (r.ubicacion.latitud !== 0 || r.ubicacion.longitud !== 0)
           )
         )
       }
@@ -115,7 +118,14 @@ const GeolocalizacionPage: React.FC = () => {
                     icon={r.tipo === 'PERDIDO' ? LOST_ICON : FOUND_ICON}
                   >
                     <Popup>
-                      <div style={{ minWidth: 180 }}>
+                      <div style={{ minWidth: 200 }}>
+                        {r.mascota?.fotografia && (
+                          <img
+                            src={r.mascota.fotografia}
+                            alt={r.mascota.nombre}
+                            style={{ width: '100%', height: 110, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }}
+                          />
+                        )}
                         <span style={{
                           display: 'inline-block', padding: '2px 8px', borderRadius: 9999,
                           fontSize: 11, fontWeight: 600, color: 'white', marginBottom: 6,

@@ -90,26 +90,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const token = localStorage.getItem('token')
       const userStr = localStorage.getItem('user')
-      
       if (token && userStr) {
         const user = JSON.parse(userStr)
         apiClient.setAuthToken(token)
-        set({
-          user,
-          token,
-          isAuthenticated: true,
-        })
-        
-        // Verify token is still valid
-        try {
-          const currentUser = await authService.getCurrentUser()
-          set({ user: currentUser })
-        } catch {
-          // Token expired or invalid
-          set({ isAuthenticated: false, user: null, token: null })
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-        }
+        set({ user, token, isAuthenticated: true })
       }
     } catch (error) {
       console.error('Error loading user from storage:', error)

@@ -8,8 +8,8 @@ interface BackendMascota {
   tipo: string
   raza: string
   color: string
-  caracteristica?: { descripcion?: string; tamanio?: string }
-  fotos?: { url: string }[]
+  caracteristica?: { descripcionFisica?: string; tamaño?: string; senasParticulares?: string }
+  fotos?: { urlFoto: string; esPrincipal?: boolean }[]
 }
 
 interface BackendReporte {
@@ -59,9 +59,9 @@ function mapReporte(r: BackendReporte): Reporte {
     especie: mapEspecie(r.mascota?.tipo ?? ''),
     raza: r.mascota?.raza ?? '',
     color: r.mascota?.color ?? '',
-    tamaño: mapTamaño(r.mascota?.caracteristica?.tamanio),
-    señas_particulares: r.mascota?.caracteristica?.descripcion,
-    fotografia: r.mascota?.fotos?.[0]?.url,
+    tamaño: mapTamaño(r.mascota?.caracteristica?.tamaño),
+    señas_particulares: r.mascota?.caracteristica?.senasParticulares ?? r.mascota?.caracteristica?.descripcionFisica,
+    fotografia: r.mascota?.fotos?.find(f => f.esPrincipal)?.urlFoto ?? r.mascota?.fotos?.[0]?.urlFoto,
   }
 
   const ubicacion: UbicacionReporte = {
@@ -142,8 +142,10 @@ export const reporteService = {
       tipo: data.mascota?.especie ?? 'PERRO',
       raza: data.mascota?.raza ?? '',
       color: data.mascota?.color ?? '',
-      tamanio: data.mascota?.tamaño ?? 'MEDIANO',
-      señasParticulares: data.mascota?.señas_particulares ?? '',
+      caracteristica: {
+        'tamaño': data.mascota?.tamaño ?? 'MEDIANO',
+        senasParticulares: data.mascota?.señas_particulares ?? '',
+      },
       ubicacion: [data.ubicacion?.ciudad, data.ubicacion?.direccion]
         .filter(Boolean)
         .join(', '),
@@ -151,6 +153,7 @@ export const reporteService = {
       longitud: data.ubicacion?.longitud ?? 0,
       descripcion: data.descripcion ?? '',
       emailContacto: `reporte_${Date.now()}@sanos.cl`,
+      fotoBase64: data.fotoBase64 ?? null,
     }
     const response = await api.post<BackendReporte>('/reports', body)
     return mapReporte(response.data)
@@ -161,11 +164,10 @@ export const reporteService = {
     return response.data.map(mapReporte)
   },
 
-  resolverReporte: async (id: string): Promise<Reporte> => {
-    const response = await api.patch<BackendReporte>(`/reports/${id}/estado`, null, {
+  resolverReporte: async (id: string): Promise<void> => {
+    await api.patch(`/reports/${id}/estado`, null, {
       params: { nuevoEstado: 'RESUELTO' },
     })
-    return mapReporte(response.data)
   },
 
   deleteReporte: async (id: string): Promise<void> => {

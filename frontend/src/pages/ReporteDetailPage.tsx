@@ -1,19 +1,29 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiMapPin, FiCalendar, FiTag } from 'react-icons/fi'
+import { FiArrowLeft, FiMapPin, FiCalendar, FiTag, FiCheckCircle, FiMessageSquare, FiSend } from 'react-icons/fi'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
 import Badge from '@/components/Badge'
 import { reporteService } from '@/services/reporte.service'
-import { Reporte } from '@/types'
+import { useAuthStore } from '@/context/authStore'
+import { useNotificacionStore } from '@/context/notificacionStore'
+import { useMensajeStore } from '@/context/mensajeStore'
+import { Reporte, Notificacion } from '@/types'
 import { formatDate } from '@/utils/helpers'
 import toast from 'react-hot-toast'
 
 const ReporteDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const { notificaciones, addNotificacion } = useNotificacionStore()
+  const { enviarMensaje } = useMensajeStore()
   const [reporte, setReporte] = useState<Reporte | null>(null)
   const [loading, setLoading] = useState(true)
+  const [resolving, setResolving] = useState(false)
+  const [showContact, setShowContact] = useState(false)
+  const [contactMsg, setContactMsg] = useState('')
+  const [sendingMsg, setSendingMsg] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -33,6 +43,53 @@ const ReporteDetailPage: React.FC = () => {
     }
   }
 
+  const handleResolver = async () => {
+    if (!reporte || !id) return
+    if (!window.confirm('¿Marcar este reporte como resuelto? Esto indica que la mascota fue encontrada o devuelta.')) return
+    setResolving(true)
+    try {
+      await reporteService.resolverReporte(id)
+      setReporte(prev => prev ? { ...prev, estado: 'RESUELTO' } : prev)
+
+      // Notificación local de resolución
+      const notif: Notificacion = {
+        id: `resolucion_${Date.now()}`,
+        titulo: '✅ Reporte resuelto',
+        mensaje: `El reporte de "${reporte.mascota?.nombre ?? 'tu mascota'}" ha sido marcado como resuelto. ¡Nos alegra que haya terminado bien!`,
+        tipo: 'RESOLUCION',
+        estado: 'NO_LEIDA',
+        usuarioId: user?.id ?? '',
+        relatedReporteId: id,
+        fechaCreacion: new Date().toISOString(),
+        canalEnvio: 'INTERNO',
+      }
+      addNotificacion(notif)
+      toast.success('¡Reporte resuelto! Nos alegra que todo haya terminado bien 🐾')
+    } catch {
+      toast.error('No se pudo actualizar el estado del reporte')
+    } finally {
+      setResolving(false)
+    }
+  }
+
+  const handleContactar = async () => {
+    if (!reporte || !id || !user || !contactMsg.trim()) return
+    setSendingMsg(true)
+    enviarMensaje({
+      fromUserId: user.id,
+      fromUserName: `${user.nombre} ${user.apellido}`,
+      toUserId: reporte.usuarioId,
+      toUserName: 'Dueño del reporte',
+      reporteId: id,
+      reporteTitulo: reporte.titulo,
+      contenido: contactMsg.trim(),
+    })
+    setContactMsg('')
+    setShowContact(false)
+    toast.success('Mensaje enviado. El dueño lo verá en su bandeja de mensajes.')
+    setSendingMsg(false)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -47,6 +104,8 @@ const ReporteDetailPage: React.FC = () => {
   if (!reporte) return null
 
   const especieEmoji = reporte.mascota?.especie === 'PERRO' ? '🐕' : reporte.mascota?.especie === 'GATO' ? '🐈' : '🐾'
+  const esOwner = user?.id === reporte.usuarioId
+  const matchNotifs = notificaciones.filter(n => n.tipo === 'COINCIDENCIA' && n.relatedReporteId !== id)
 
   return (
     <div className="space-y-5 max-w-3xl mx-auto fade-in">
@@ -130,8 +189,98 @@ const ReporteDetailPage: React.FC = () => {
               <p className="text-sm text-amber-900">{reporte.mascota.señas_particulares}</p>
             </div>
           )}
+
+          {/* Resolver button — visible solo al dueño cuando el reporte está activo */}
+          {esOwner && reporte.estado === 'ACTIVO' && (
+            <div className="border-t border-slate-100 pt-4">
+              <p className="text-xs text-slate-400 mb-3">¿Ya se encontró tu mascota? Marca el reporte como resuelto para notificar a la comunidad.</p>
+              <Button
+                variant="accent"
+                className="w-full"
+                onClick={handleResolver}
+                loading={resolving}
+              >
+                <FiCheckCircle size={16} /> Marcar como Resuelto — ¡La encontré!
+              </Button>
+            </div>
+          )}
+
+          {/* Contactar al dueño — visible para no-dueños en reportes activos */}
+          {!esOwner && reporte.estado === 'ACTIVO' && (
+            <div className="border-t border-slate-100 pt-4 space-y-3">
+              {!showContact ? (
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => setShowContact(true)}
+                >
+                  <FiMessageSquare size={16} /> Contactar al dueño
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    Enviar mensaje al dueño del reporte
+                  </p>
+                  <textarea
+                    value={contactMsg}
+                    onChange={e => setContactMsg(e.target.value)}
+                    placeholder={`Hola, creo que encontré a ${reporte.mascota?.nombre ?? 'tu mascota'}. Me gustaría coordinarnos…`}
+                    rows={4}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { setShowContact(false); setContactMsg('') }}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleContactar}
+                      loading={sendingMsg}
+                      disabled={!contactMsg.trim()}
+                    >
+                      <FiSend size={14} /> Enviar mensaje
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Resuelto banner */}
+          {reporte.estado === 'RESUELTO' && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex gap-3 items-center">
+              <span className="text-2xl">🎉</span>
+              <div>
+                <p className="font-bold text-emerald-800 text-sm">¡Caso resuelto!</p>
+                <p className="text-xs text-emerald-700 mt-0.5">Esta mascota ya fue encontrada o devuelta a su dueño.</p>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
+
+      {/* Coincidencias relacionadas */}
+      {matchNotifs.length > 0 && (
+        <Card>
+          <h3 className="font-bold text-slate-800 text-sm mb-3">🎯 Posibles coincidencias detectadas</h3>
+          <div className="space-y-2">
+            {matchNotifs.slice(0, 3).map(n => (
+              <div
+                key={n.id}
+                className="bg-accent-50 border border-accent-100 rounded-xl p-3 cursor-pointer hover:bg-accent-100 transition"
+                onClick={() => n.relatedReporteId && navigate(`/reportes/${n.relatedReporteId}`)}
+              >
+                <p className="text-sm font-semibold text-accent-800">{n.titulo}</p>
+                <p className="text-xs text-accent-700 mt-0.5">{n.mensaje}</p>
+                {n.relatedReporteId && (
+                  <p className="text-xs text-accent-500 mt-1 font-medium">Ver reporte coincidente →</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   )
 }

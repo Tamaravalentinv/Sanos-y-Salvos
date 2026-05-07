@@ -149,6 +149,20 @@ export interface EstadisticasGlobales {
   usuariosActivos: number
 }
 
+// Mensaje Types
+export interface Mensaje {
+  id: string
+  fromUserId: string
+  fromUserName: string
+  toUserId: string
+  toUserName: string
+  reporteId: string
+  reporteTitulo: string
+  contenido: string
+  leido: boolean
+  fechaCreacion: string
+}
+
 // Error Response
 export interface ApiError {
   message: string

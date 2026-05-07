@@ -1,14 +1,27 @@
 import { create } from 'zustand'
 import { Notificacion } from '@/types'
-import { notificacionService } from '@/services/notificacion.service'
+
+const STORAGE_KEY = 'sanos_notificaciones'
+
+function loadFromStorage(): Notificacion[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveToStorage(notificaciones: Notificacion[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notificaciones))
+}
 
 interface NotificacionStore {
   notificaciones: Notificacion[]
   noLeidasCount: number
   isLoading: boolean
   error: string | null
-  
-  // Actions
+
   loadNotificaciones: () => Promise<void>
   loadNoLeidasCount: () => Promise<void>
   marcarComoLeida: (id: string) => Promise<void>
@@ -19,73 +32,46 @@ interface NotificacionStore {
 }
 
 export const useNotificacionStore = create<NotificacionStore>((set, get) => ({
-  notificaciones: [],
-  noLeidasCount: 0,
+  notificaciones: loadFromStorage(),
+  noLeidasCount: loadFromStorage().filter(n => n.estado === 'NO_LEIDA').length,
   isLoading: false,
   error: null,
 
   loadNotificaciones: async () => {
-    set({ isLoading: true, error: null })
-    try {
-      const result = await notificacionService.getNotificaciones()
-      set({
-        notificaciones: result.content,
-        isLoading: false,
-      })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Error al cargar notificaciones'
-      set({ error: errorMessage, isLoading: false })
-    }
+    const stored = loadFromStorage()
+    set({ notificaciones: stored, isLoading: false })
   },
 
   loadNoLeidasCount: async () => {
-    try {
-      const count = await notificacionService.getNotificacionesNoLeidas()
-      set({ noLeidasCount: count })
-    } catch (error) {
-      console.error('Error loading unread count:', error)
-    }
+    const count = get().notificaciones.filter(n => n.estado === 'NO_LEIDA').length
+    set({ noLeidasCount: count })
   },
 
   marcarComoLeida: async (id: string) => {
-    try {
-      await notificacionService.marcarComoLeida(id)
-      const notificaciones = get().notificaciones.map((n) =>
-        n.id === id ? { ...n, estado: 'LEIDA' as const } : n
-      )
-      set({ notificaciones })
-      get().loadNoLeidasCount()
-    } catch (error) {
-      console.error('Error marking notification as read:', error)
-    }
+    const notificaciones = get().notificaciones.map(n =>
+      n.id === id ? { ...n, estado: 'LEIDA' as const } : n
+    )
+    saveToStorage(notificaciones)
+    set({ notificaciones })
+    get().loadNoLeidasCount()
   },
 
   marcarTodasComoLeidas: async () => {
-    try {
-      await notificacionService.marcarTodasComoLeidas()
-      const notificaciones = get().notificaciones.map((n) => ({
-        ...n,
-        estado: 'LEIDA' as const,
-      }))
-      set({ notificaciones, noLeidasCount: 0 })
-    } catch (error) {
-      console.error('Error marking all as read:', error)
-    }
+    const notificaciones = get().notificaciones.map(n => ({ ...n, estado: 'LEIDA' as const }))
+    saveToStorage(notificaciones)
+    set({ notificaciones, noLeidasCount: 0 })
   },
 
   deleteNotificacion: async (id: string) => {
-    try {
-      await notificacionService.deleteNotificacion(id)
-      const notificaciones = get().notificaciones.filter((n) => n.id !== id)
-      set({ notificaciones })
-      get().loadNoLeidasCount()
-    } catch (error) {
-      console.error('Error deleting notification:', error)
-    }
+    const notificaciones = get().notificaciones.filter(n => n.id !== id)
+    saveToStorage(notificaciones)
+    set({ notificaciones })
+    get().loadNoLeidasCount()
   },
 
   addNotificacion: (notificacion: Notificacion) => {
     const notificaciones = [notificacion, ...get().notificaciones]
+    saveToStorage(notificaciones)
     set({ notificaciones })
     if (notificacion.estado === 'NO_LEIDA') {
       set({ noLeidasCount: get().noLeidasCount + 1 })
@@ -93,11 +79,7 @@ export const useNotificacionStore = create<NotificacionStore>((set, get) => ({
   },
 
   clearAll: async () => {
-    try {
-      await notificacionService.deleteTodasNotificaciones()
-      set({ notificaciones: [], noLeidasCount: 0 })
-    } catch (error) {
-      console.error('Error clearing all notifications:', error)
-    }
+    localStorage.removeItem(STORAGE_KEY)
+    set({ notificaciones: [], noLeidasCount: 0 })
   },
 }))

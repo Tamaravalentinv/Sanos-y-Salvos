@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FiTrash2, FiCheckSquare } from 'react-icons/fi'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
@@ -15,7 +16,8 @@ const TIPO_ICON: Record<string, string> = {
 }
 
 const NotificacionesPage: React.FC = () => {
-  const { notificaciones, loadNotificaciones, marcarTodasComoLeidas, deleteNotificacion, clearAll } = useNotificacionStore()
+  const navigate = useNavigate()
+  const { notificaciones, loadNotificaciones, marcarComoLeida, marcarTodasComoLeidas, deleteNotificacion, clearAll } = useNotificacionStore()
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'todas' | 'no_leidas'>('todas')
 
@@ -110,7 +112,11 @@ const NotificacionesPage: React.FC = () => {
           filtered.map(n => (
             <Card
               key={n.id}
-              className={`transition-all ${n.estado === 'NO_LEIDA' ? 'border-l-4 border-l-primary-400 bg-primary-50/30' : ''}`}
+              className={`transition-all ${n.estado === 'NO_LEIDA' ? 'border-l-4 border-l-primary-400 bg-primary-50/30' : ''} ${n.relatedReporteId ? 'cursor-pointer hover:shadow-md' : ''}`}
+              onClick={async () => {
+                if (n.estado === 'NO_LEIDA') await marcarComoLeida(n.id)
+                if (n.relatedReporteId) navigate(`/reportes/${n.relatedReporteId}`)
+              }}
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl
@@ -130,10 +136,13 @@ const NotificacionesPage: React.FC = () => {
                   </div>
                   <p className="text-sm text-slate-600 mb-1">{n.mensaje}</p>
                   <p className="text-xs text-slate-400">{formatDistanceToNow(n.fechaCreacion)}</p>
+                  {n.relatedReporteId && (
+                    <p className="text-xs text-primary-500 font-medium mt-1">Ver reporte relacionado →</p>
+                  )}
                 </div>
 
                 <button
-                  onClick={() => deleteNotificacion(n.id)}
+                  onClick={e => { e.stopPropagation(); deleteNotificacion(n.id) }}
                   className="p-2 hover:bg-slate-100 rounded-lg transition flex-shrink-0 text-slate-400 hover:text-red-500"
                   title="Eliminar"
                 >

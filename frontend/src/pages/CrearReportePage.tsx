@@ -9,7 +9,84 @@ import Textarea from '@/components/Textarea'
 import MapPicker from '@/components/MapPicker'
 import { reporteService } from '@/services/reporte.service'
 import { useAuthStore } from '@/context/authStore'
+import { useNotificacionStore } from '@/context/notificacionStore'
+import { Notificacion } from '@/types'
 import toast from 'react-hot-toast'
+
+function calcularDistanciaKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+// ── Matching helpers ──────────────────────────────────────────────────────────
+
+function normText(s: string): string {
+  return s.toLowerCase().trim()
+    .replace(/[áàä]/g, 'a').replace(/[éèë]/g, 'e')
+    .replace(/[íìï]/g, 'i').replace(/[óòö]/g, 'o').replace(/[úùü]/g, 'u')
+}
+
+function puntajeRaza(r1: string, r2: string): { pts: number; detalle: string } {
+  const n1 = normText(r1), n2 = normText(r2)
+  const vacios = ['desconocida', 'desconocido', 'mestizo', 'mestiza', 'no se', '']
+  if (vacios.includes(n1) || vacios.includes(n2)) return { pts: 0, detalle: '' }
+  if (n1 === n2) return { pts: 35, detalle: `misma raza (${r1})` }
+  if (n1.includes(n2) || n2.includes(n1)) return { pts: 25, detalle: `raza muy similar (${r1} / ${r2})` }
+  const w1 = n1.split(/\s+/).filter(w => w.length > 3)
+  const w2 = n2.split(/\s+/).filter(w => w.length > 3)
+  if (w1.length && w2.length && w1.some(a => w2.some(b => a.includes(b) || b.includes(a)))) {
+    return { pts: 15, detalle: `raza relacionada (${r1} / ${r2})` }
+  }
+  return { pts: 0, detalle: '' }
+}
+
+function puntajeColor(c1: string, c2: string): { pts: number; detalle: string } {
+  if (!c1 || !c2) return { pts: 0, detalle: '' }
+  const t1 = normText(c1).split(/[\s,/]+/).filter(t => t.length > 2)
+  const t2 = normText(c2).split(/[\s,/]+/).filter(t => t.length > 2)
+  if (!t1.length || !t2.length) return { pts: 0, detalle: '' }
+  let matches = 0
+  for (const a of t1) {
+    if (t2.some(b => a.includes(b) || b.includes(a))) matches++
+  }
+  if (!matches) return { pts: 0, detalle: '' }
+  const pts = Math.round((matches / Math.max(t1.length, t2.length)) * 25)
+  return { pts, detalle: pts >= 20 ? `mismo color (${c1})` : `color similar (${c1} / ${c2})` }
+}
+
+const TAMAÑOS = ['PEQUEÑO', 'MEDIANO', 'GRANDE']
+function puntajeTamaño(t1: string, t2: string): { pts: number; detalle: string } {
+  if (t1 === t2) return { pts: 15, detalle: `mismo tamaño (${t1.toLowerCase()})` }
+  const i1 = TAMAÑOS.indexOf(t1), i2 = TAMAÑOS.indexOf(t2)
+  if (i1 !== -1 && i2 !== -1 && Math.abs(i1 - i2) === 1) return { pts: 5, detalle: 'tamaño similar' }
+  return { pts: 0, detalle: '' }
+}
+
+function puntajeProximidad(lat1: number, lng1: number, lat2: number, lng2: number): { pts: number; detalle: string; dist: number } {
+  if (!lat1 || !lng1 || !lat2 || !lng2) return { pts: 0, detalle: '', dist: -1 }
+  const dist = calcularDistanciaKm(lat1, lng1, lat2, lng2)
+  if (dist < 1)  return { pts: 20, detalle: `muy cerca (${dist.toFixed(1)} km)`, dist }
+  if (dist < 3)  return { pts: 17, detalle: `zona cercana (${dist.toFixed(1)} km)`, dist }
+  if (dist < 7)  return { pts: 13, detalle: `zona próxima (${dist.toFixed(1)} km)`, dist }
+  if (dist < 15) return { pts: 8,  detalle: `misma área (${dist.toFixed(1)} km)`, dist }
+  if (dist < 25) return { pts: 4,  detalle: `zona amplia (${dist.toFixed(1)} km)`, dist }
+  return { pts: 0, detalle: '', dist }
+}
+
+function puntajeFecha(f1: string, f2: string): number {
+  if (!f1 || !f2) return 1
+  const dias = Math.abs(new Date(f1).getTime() - new Date(f2).getTime()) / 86400000
+  if (dias <= 3)  return 5
+  if (dias <= 7)  return 4
+  if (dias <= 14) return 3
+  if (dias <= 30) return 2
+  return 1
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const ESPECIE_OPS = [
   { value: 'PERRO',   label: '🐕 Perro' },
@@ -33,6 +110,7 @@ const CrearReportePage: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { user } = useAuthStore()
+  const { addNotificacion } = useNotificacionStore()
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -104,6 +182,7 @@ const CrearReportePage: React.FC = () => {
       await reporteService.createReporte({
         tipo: form.tipo,
         descripcion: form.descripcion,
+        fotoBase64: photoPreview ?? undefined,
         mascota: {
           nombre: form.nombreMascota.trim() || 'Sin nombre',
           especie: especieFinal,
@@ -122,7 +201,67 @@ const CrearReportePage: React.FC = () => {
         usuarioId: user?.id ?? '1',
       })
       toast.success('¡Reporte creado exitosamente! 🐾')
-      navigate('/reportes')
+
+      // Buscar coincidencias reales con reportes del tipo opuesto
+      try {
+        const tipoOpuesto = form.tipo === 'PERDIDO' ? 'ENCONTRADO' : 'PERDIDO'
+        const { content: todos } = await reporteService.getAllReportes({ size: 200 })
+        const opuestos = todos.filter(r => r.tipo === tipoOpuesto && r.estado === 'ACTIVO')
+
+        // La especie del formulario se almacena en backend como PERRO, GATO u OTRO
+        const especieAlmacenada =
+          especieFinal === 'PERRO' ? 'PERRO' : especieFinal === 'GATO' ? 'GATO' : 'OTRO'
+        const lat = parseFloat(form.latitud) || 0
+        const lng = parseFloat(form.longitud) || 0
+        const ahora = new Date().toISOString()
+
+        const matches = opuestos
+          // Prerequisito estricto: misma especie exacta
+          .filter(r => r.mascota?.especie === especieAlmacenada)
+          .map(r => {
+            const raza  = puntajeRaza(form.raza, r.mascota?.raza ?? '')
+            const color = puntajeColor(form.color, r.mascota?.color ?? '')
+            const tam   = puntajeTamaño(form.tamaño, r.mascota?.tamaño ?? '')
+            const prox  = puntajeProximidad(lat, lng, r.ubicacion?.latitud ?? 0, r.ubicacion?.longitud ?? 0)
+            const fecha = puntajeFecha(ahora, r.fechaReporte)
+
+            const score = raza.pts + color.pts + tam.pts + prox.pts + fecha
+            const factores = [raza.detalle, color.detalle, tam.detalle, prox.detalle].filter(Boolean)
+
+            return { reporte: r, score, factores, dist: prox.dist }
+          })
+          // Umbral: 45/100 puntos Y al menos un factor nombrado — especie sola no alcanza
+          .filter(m => m.score >= 45 && m.factores.length >= 1)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 3)
+
+        for (const match of matches) {
+          const distTexto = match.dist > 0 ? ` a ${match.dist.toFixed(1)} km` : ''
+          const ciudadTexto = match.reporte.ubicacion?.ciudad ? `, ${match.reporte.ubicacion.ciudad}` : ''
+          const notif: Notificacion = {
+            id: `match_${Date.now()}_${match.reporte.id}`,
+            titulo: '🎯 Posible coincidencia detectada',
+            mensaje: `"${match.reporte.mascota?.nombre ?? 'Animal sin nombre'}" fue reportado como ${match.reporte.tipo === 'ENCONTRADO' ? 'encontrado' : 'perdido'}${distTexto}${ciudadTexto}. Coincide en: ${match.factores.join(', ')}.`,
+            tipo: 'COINCIDENCIA',
+            estado: 'NO_LEIDA',
+            usuarioId: user?.id ?? '',
+            relatedReporteId: match.reporte.id,
+            fechaCreacion: new Date().toISOString(),
+            canalEnvio: 'INTERNO',
+          }
+          addNotificacion(notif)
+        }
+        if (matches.length > 0) {
+          toast.success(
+            `¡${matches.length} coincidencia${matches.length > 1 ? 's' : ''} real${matches.length > 1 ? 'es' : ''} detectada${matches.length > 1 ? 's' : ''}! Revisa tus notificaciones 🔔`,
+            { duration: 6000 }
+          )
+        }
+      } catch {
+        // matching failure is non-fatal
+      }
+
+      navigate('/mapa')
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Error al crear el reporte')
     } finally {

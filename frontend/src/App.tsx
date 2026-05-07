@@ -15,6 +15,7 @@ import GeolocalizacionPage from '@/pages/GeolocalizacionPage'
 import NotificacionesPage from '@/pages/NotificacionesPage'
 import PerfilPage from '@/pages/PerfilPage'
 import ReporteDetailPage from '@/pages/ReporteDetailPage'
+import MensajesPage from '@/pages/MensajesPage'
 
 // Components
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -70,6 +71,7 @@ function App() {
               <Route path="/reportes/:id" element={<ReporteDetailPage />} />
               <Route path="/coincidencias" element={<CoincidenciasPage />} />
               <Route path="/mapa" element={<GeolocalizacionPage />} />
+              <Route path="/mensajes" element={<MensajesPage />} />
               <Route path="/notificaciones" element={<NotificacionesPage />} />
               <Route path="/perfil" element={<PerfilPage />} />
             </Route>

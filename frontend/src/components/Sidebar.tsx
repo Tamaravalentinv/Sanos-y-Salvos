@@ -1,11 +1,12 @@
 import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  FiHome, FiFileText, FiGitMerge, FiMapPin,
-  FiBell, FiUser, FiLogOut, FiX, FiPlus,
+  FiHome, FiFileText, FiMapPin,
+  FiBell, FiUser, FiLogOut, FiX, FiPlus, FiMessageSquare,
 } from 'react-icons/fi'
 import { useAuthStore } from '@/context/authStore'
 import { useNotificacionStore } from '@/context/notificacionStore'
+import { useMensajeStore } from '@/context/mensajeStore'
 import { getInitials } from '@/utils/helpers'
 
 interface SidebarProps {
@@ -16,8 +17,8 @@ interface SidebarProps {
 const NAV = [
   { path: '/dashboard',     label: 'Dashboard',      icon: FiHome },
   { path: '/reportes',      label: 'Reportes',       icon: FiFileText },
-  { path: '/coincidencias', label: 'Coincidencias',  icon: FiGitMerge },
   { path: '/mapa',          label: 'Mapa',           icon: FiMapPin },
+  { path: '/mensajes',      label: 'Mensajes',       icon: FiMessageSquare },
   { path: '/notificaciones',label: 'Notificaciones', icon: FiBell },
   { path: '/perfil',        label: 'Mi Perfil',      icon: FiUser },
 ]
@@ -27,6 +28,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const { noLeidasCount } = useNotificacionStore()
+  const { getNoLeidosCount } = useMensajeStore()
+  const mensajesNoLeidos = user ? getNoLeidosCount(user.id) : 0
 
   const handleLogout = () => {
     logout()
@@ -83,6 +86,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
           {NAV.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path || location.pathname.startsWith(path + '/')
             const isBell = path === '/notificaciones'
+            const isMensajes = path === '/mensajes'
+            const badge = isBell ? noLeidasCount : isMensajes ? mensajesNoLeidos : 0
             return (
               <Link
                 key={path}
@@ -101,9 +106,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
                 )}
                 <Icon size={18} className={active ? 'text-accent-300' : ''} />
                 <span>{label}</span>
-                {isBell && noLeidasCount > 0 && (
+                {badge > 0 && (
                   <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1">
-                    {noLeidasCount > 9 ? '9+' : noLeidasCount}
+                    {badge > 9 ? '9+' : badge}
                   </span>
                 )}
               </Link>

@@ -1,5 +1,6 @@
 package com.sanosysalvos.ms_mascotas.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,6 +40,7 @@ public class Mascota {
     private java.util.List<FotoMascota> fotos;
 
     // Relación con reporte
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporte_id")
     private Reporte reporte;
