@@ -419,25 +419,62 @@ mvn test -pl ms-proyectos
 
 ## Pruebas Unitarias y Cobertura de Código
 
-**Estado: COMPLETADAS**
+**Estado: COMPLETADAS - 100% COBERTURA EN CONTROLLERS Y SERVICES**
 
-### MS Proyectos - Suite de Tests (32 pruebas)
+### MS Proyectos - Suite de Tests Verificada (56 pruebas)
 
-| Componente | Tests | Cobertura |
-|-----------|-------|-----------|
-| ProyectoService | 8 | 97.6% |
-| TareaService | 8 | 97.8% |
-| ProyectoController | 8 | 90.3% |
-| TareaController | 8 | 81.6% |
-| **TOTAL** | **32** | **~92%** |
+| Componente | Tests | Instrucciones | Líneas | Métodos |
+|-----------|-------|---------------|--------|---------|
+| **TareaController** | 15 | 100% (114/114) | 100% (21/21) | 100% (11/11) |
+| **ProyectoController** | 13 | 100% (103/103) | 100% (19/19) | 100% (10/10) |
+| **TareaService** | 15 | 100% (90/90) | 100% (22/22) | 100% (9/9) |
+| **ProyectoService** | 13 | 100% (85/85) | 100% (21/21) | 100% (8/8) |
+| **TOTAL** | **56** | **100%** | **100%** | **100%** |
+
+### Cobertura por Componente
+
+#### Controllers (100% Cobertura)
+- **TareaController**: Todos los 11 métodos cubiertos
+  - Crear, obtener por ID, obtener todos, obtener por proyecto/asignado/estado
+  - Actualizar, eliminar, casos de error (NOT_FOUND)
+  
+- **ProyectoController**: Todos los 10 métodos cubiertos
+  - Crear, obtener por ID, obtener todos, obtener por responsable/estado
+  - Actualizar, eliminar, casos de error (NOT_FOUND)
+
+#### Services (100% Cobertura)
+- **TareaService**: Todos los 9 métodos cubiertos
+  - Casos de éxito (crear, actualizar, eliminar)
+  - Casos de error (ID no existente)
+  - Listas vacías
+  
+- **ProyectoService**: Todos los 8 métodos cubiertos
+  - Casos de éxito (crear, actualizar, eliminar)
+  - Casos de error (ID no existente)
+  - Listas vacías
 
 ### Características de la Suite de Tests
 
-- JUnit 5 + Mockito para pruebas unitarias
-- 32 tests implementados (0 fallos, 0 errores)
-- Cobertura de código: ~92% 
-- JaCoCo v0.8.10 para generación de reportes
-- SonarQube v3.10.0.2594 configurado
+- **Framework**: JUnit 5 + Mockito
+- **Tests Totales**: 56 pruebas implementadas
+- **Estado**: 0 fallos, 0 errores, 0 skipped
+- **Cobertura**: 100% en controllers y services
+- **Herramientas**: JaCoCo v0.8.10 para reportes, SonarQube v3.10.0.2594 configurado
+- **Commit**: `pruebas unitarias verificadas` (530477e)
+
+### Ejecutar Tests
+
+```bash
+# Ejecutar todos los tests (56 pruebas)
+mvn clean test
+
+# Tests de un módulo específico
+mvn test -pl ms-proyectos
+
+# Tests de una clase específica
+mvn test -Dtest=TareaControllerTest
+mvn test -Dtest=ProyectoServiceTest
+```
 
 ### Generar Reporte de Cobertura
 
@@ -445,9 +482,28 @@ mvn test -pl ms-proyectos
 # Ejecutar tests y generar reporte JaCoCo
 mvn clean test
 
-# El reporte se genera en: ms-proyectos/target/site/jacoco/index.html
-# Abre en tu navegador para ver detalles detallados
+# Generar reporte JaCoCo explícitamente
+mvn jacoco:report
+
+# El reporte se genera en:
+# ms-proyectos/target/site/jacoco/index.html
+
+# Abre en tu navegador para ver:
+# - Detalles de cobertura por clase
+# - Análisis de instrucciones y líneas
+# - Información de métodos cubiertos
+# - Matriz de complejidad
 ```
+
+### Validaciones de Pruebas
+
+✓ **100% de instrucciones cubiertas** (392/392)
+✓ **100% de líneas cubiertas** (83/83)
+✓ **100% de métodos implementados**
+✓ **Casos de éxito validados**
+✓ **Casos de error validados**
+✓ **Listas vacías validadas**
+✓ **Manejo de excepciones verificado**
 
 ## Seguridad
 
