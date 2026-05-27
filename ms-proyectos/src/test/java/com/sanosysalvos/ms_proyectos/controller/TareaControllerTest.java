@@ -150,4 +150,92 @@ public class TareaControllerTest {
         assertEquals(1, respuesta.getBody().size());
         verify(tareaService, times(1)).obtenerTareasPorEstado("PENDIENTE");
     }
+
+    @Test
+    public void testObtenerTareasPorAsignado() {
+        when(tareaService.obtenerTareasPorAsignado(1L))
+                .thenReturn(Arrays.asList(tarea));
+
+        ResponseEntity<List<Tarea>> respuesta = tareaController.obtenerTareasPorAsignado(1L);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(1, respuesta.getBody().size());
+        assertEquals("Tarea Test", respuesta.getBody().get(0).getTitulo());
+        verify(tareaService, times(1)).obtenerTareasPorAsignado(1L);
+    }
+
+    @Test
+    public void testObtenerTareasPorAsignadoVacio() {
+        when(tareaService.obtenerTareasPorAsignado(999L))
+                .thenReturn(Arrays.asList());
+
+        ResponseEntity<List<Tarea>> respuesta = tareaController.obtenerTareasPorAsignado(999L);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(0, respuesta.getBody().size());
+        verify(tareaService, times(1)).obtenerTareasPorAsignado(999L);
+    }
+
+    @Test
+    public void testActualizarTareaNoExistente() {
+        when(tareaService.actualizarTarea(eq(999L), any(Tarea.class)))
+                .thenReturn(null);
+
+        ResponseEntity<Tarea> respuesta = tareaController.actualizarTarea(999L, tarea);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
+        verify(tareaService, times(1)).actualizarTarea(eq(999L), any(Tarea.class));
+    }
+
+    @Test
+    public void testEliminarTareaNoExistente() {
+        when(tareaService.eliminarTarea(999L)).thenReturn(false);
+
+        ResponseEntity<Void> respuesta = tareaController.eliminarTarea(999L);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
+        verify(tareaService, times(1)).eliminarTarea(999L);
+    }
+
+    @Test
+    public void testObtenerTareasPorProyectoVacio() {
+        when(tareaService.obtenerTareasPorProyecto(999L))
+                .thenReturn(Arrays.asList());
+
+        ResponseEntity<List<Tarea>> respuesta = tareaController.obtenerTareasPorProyecto(999L);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(0, respuesta.getBody().size());
+        verify(tareaService, times(1)).obtenerTareasPorProyecto(999L);
+    }
+
+    @Test
+    public void testObtenerTareasPorEstadoVacio() {
+        when(tareaService.obtenerTareasPorEstado("CANCELADA"))
+                .thenReturn(Arrays.asList());
+
+        ResponseEntity<List<Tarea>> respuesta = tareaController.obtenerTareasPorEstado("CANCELADA");
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(0, respuesta.getBody().size());
+        verify(tareaService, times(1)).obtenerTareasPorEstado("CANCELADA");
+    }
+
+    @Test
+    public void testObtenerTodasTareasVacio() {
+        when(tareaService.obtenerTodasTareas()).thenReturn(Arrays.asList());
+
+        ResponseEntity<List<Tarea>> respuesta = tareaController.obtenerTodasTareas();
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(0, respuesta.getBody().size());
+        verify(tareaService, times(1)).obtenerTodasTareas();
+    }
 }

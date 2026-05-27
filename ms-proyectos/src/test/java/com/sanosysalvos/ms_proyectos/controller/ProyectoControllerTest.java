@@ -149,4 +149,65 @@ public class ProyectoControllerTest {
         assertEquals(1, respuesta.getBody().size());
         verify(proyectoService, times(1)).obtenerProyectosPorEstado("ACTIVO");
     }
+
+    @Test
+    public void testActualizarProyectoNoExistente() {
+        when(proyectoService.actualizarProyecto(eq(999L), any(Proyecto.class)))
+                .thenReturn(null);
+
+        ResponseEntity<Proyecto> respuesta = proyectoController.actualizarProyecto(999L, proyecto);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
+        verify(proyectoService, times(1)).actualizarProyecto(eq(999L), any(Proyecto.class));
+    }
+
+    @Test
+    public void testEliminarProyectoNoExistente() {
+        when(proyectoService.eliminarProyecto(999L)).thenReturn(false);
+
+        ResponseEntity<Void> respuesta = proyectoController.eliminarProyecto(999L);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.NOT_FOUND, respuesta.getStatusCode());
+        verify(proyectoService, times(1)).eliminarProyecto(999L);
+    }
+
+    @Test
+    public void testObtenerProyectosPorResponsableVacio() {
+        when(proyectoService.obtenerProyectosPorResponsable(999L))
+                .thenReturn(Arrays.asList());
+
+        ResponseEntity<List<Proyecto>> respuesta = proyectoController.obtenerProyectosPorResponsable(999L);
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(0, respuesta.getBody().size());
+        verify(proyectoService, times(1)).obtenerProyectosPorResponsable(999L);
+    }
+
+    @Test
+    public void testObtenerProyectosPorEstadoVacio() {
+        when(proyectoService.obtenerProyectosPorEstado("CANCELADO"))
+                .thenReturn(Arrays.asList());
+
+        ResponseEntity<List<Proyecto>> respuesta = proyectoController.obtenerProyectosPorEstado("CANCELADO");
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(0, respuesta.getBody().size());
+        verify(proyectoService, times(1)).obtenerProyectosPorEstado("CANCELADO");
+    }
+
+    @Test
+    public void testObtenerTodosProyectosVacio() {
+        when(proyectoService.obtenerTodosProyectos()).thenReturn(Arrays.asList());
+
+        ResponseEntity<List<Proyecto>> respuesta = proyectoController.obtenerTodosProyectos();
+
+        assertNotNull(respuesta);
+        assertEquals(HttpStatus.OK, respuesta.getStatusCode());
+        assertEquals(0, respuesta.getBody().size());
+        verify(proyectoService, times(1)).obtenerTodosProyectos();
+    }
 }

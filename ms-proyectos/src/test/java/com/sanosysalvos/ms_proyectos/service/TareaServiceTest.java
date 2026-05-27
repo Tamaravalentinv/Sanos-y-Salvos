@@ -144,4 +144,80 @@ public class TareaServiceTest {
         verify(tareaRepository, times(1)).existsById(1L);
         verify(tareaRepository, times(1)).deleteById(1L);
     }
+
+    @Test
+    public void testObtenerTareaPorIdNoExistente() {
+        when(tareaRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Optional<Tarea> tareaEncontrada = tareaService.obtenerTareaPorId(999L);
+
+        assertFalse(tareaEncontrada.isPresent());
+        verify(tareaRepository, times(1)).findById(999L);
+    }
+
+    @Test
+    public void testActualizarTareaNoExistente() {
+        when(tareaRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Tarea resultado = tareaService.actualizarTarea(999L, tarea);
+
+        assertNull(resultado);
+        verify(tareaRepository, times(1)).findById(999L);
+        verify(tareaRepository, never()).save(any(Tarea.class));
+    }
+
+    @Test
+    public void testEliminarTareaNoExistente() {
+        when(tareaRepository.existsById(999L)).thenReturn(false);
+
+        boolean resultado = tareaService.eliminarTarea(999L);
+
+        assertFalse(resultado);
+        verify(tareaRepository, times(1)).existsById(999L);
+        verify(tareaRepository, never()).deleteById(999L);
+    }
+
+    @Test
+    public void testObtenerTodasTareasVacio() {
+        when(tareaRepository.findAll()).thenReturn(Arrays.asList());
+
+        List<Tarea> tareas = tareaService.obtenerTodasTareas();
+
+        assertNotNull(tareas);
+        assertEquals(0, tareas.size());
+        verify(tareaRepository, times(1)).findAll();
+    }
+
+    @Test
+    public void testObtenerTareasPorProyectoVacio() {
+        when(tareaRepository.findByProyectoId(999L)).thenReturn(Arrays.asList());
+
+        List<Tarea> tareas = tareaService.obtenerTareasPorProyecto(999L);
+
+        assertNotNull(tareas);
+        assertEquals(0, tareas.size());
+        verify(tareaRepository, times(1)).findByProyectoId(999L);
+    }
+
+    @Test
+    public void testObtenerTareasPorAsignadoVacio() {
+        when(tareaRepository.findByAsignadoId(999L)).thenReturn(Arrays.asList());
+
+        List<Tarea> tareas = tareaService.obtenerTareasPorAsignado(999L);
+
+        assertNotNull(tareas);
+        assertEquals(0, tareas.size());
+        verify(tareaRepository, times(1)).findByAsignadoId(999L);
+    }
+
+    @Test
+    public void testObtenerTareasPorEstadoVacio() {
+        when(tareaRepository.findByEstado("CANCELADA")).thenReturn(Arrays.asList());
+
+        List<Tarea> tareas = tareaService.obtenerTareasPorEstado("CANCELADA");
+
+        assertNotNull(tareas);
+        assertEquals(0, tareas.size());
+        verify(tareaRepository, times(1)).findByEstado("CANCELADA");
+    }
 }

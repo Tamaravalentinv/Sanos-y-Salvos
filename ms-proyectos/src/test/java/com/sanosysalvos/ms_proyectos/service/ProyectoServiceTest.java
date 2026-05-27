@@ -141,4 +141,59 @@ public class ProyectoServiceTest {
         assertEquals("ACTIVO", proyectos.get(0).getEstado());
         verify(proyectoRepository, times(1)).findByEstado("ACTIVO");
     }
+
+    @Test
+    public void testActualizarProyectoNoExistente() {
+        when(proyectoRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Proyecto resultado = proyectoService.actualizarProyecto(999L, proyecto);
+
+        assertNull(resultado);
+        verify(proyectoRepository, times(1)).findById(999L);
+        verify(proyectoRepository, never()).save(any(Proyecto.class));
+    }
+
+    @Test
+    public void testEliminarProyectoNoExistente() {
+        when(proyectoRepository.existsById(999L)).thenReturn(false);
+
+        boolean resultado = proyectoService.eliminarProyecto(999L);
+
+        assertFalse(resultado);
+        verify(proyectoRepository, times(1)).existsById(999L);
+        verify(proyectoRepository, never()).deleteById(999L);
+    }
+
+    @Test
+    public void testObtenerTodosProyectosVacio() {
+        when(proyectoRepository.findAll()).thenReturn(Arrays.asList());
+
+        List<Proyecto> proyectos = proyectoService.obtenerTodosProyectos();
+
+        assertNotNull(proyectos);
+        assertEquals(0, proyectos.size());
+        verify(proyectoRepository, times(1)).findAll();
+    }
+
+    @Test
+    public void testObtenerProyectosPorResponsableVacio() {
+        when(proyectoRepository.findByResponsableId(999L)).thenReturn(Arrays.asList());
+
+        List<Proyecto> proyectos = proyectoService.obtenerProyectosPorResponsable(999L);
+
+        assertNotNull(proyectos);
+        assertEquals(0, proyectos.size());
+        verify(proyectoRepository, times(1)).findByResponsableId(999L);
+    }
+
+    @Test
+    public void testObtenerProyectosPorEstadoVacio() {
+        when(proyectoRepository.findByEstado("CANCELADO")).thenReturn(Arrays.asList());
+
+        List<Proyecto> proyectos = proyectoService.obtenerProyectosPorEstado("CANCELADO");
+
+        assertNotNull(proyectos);
+        assertEquals(0, proyectos.size());
+        verify(proyectoRepository, times(1)).findByEstado("CANCELADO");
+    }
 }
