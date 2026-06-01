@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -39,9 +41,9 @@ class CoincidenciaProxyControllerTest {
         String responseBody = "{\"id\": 1, \"porcentajeCoincidencia\": 85.5}";
 
         when(restTemplate.postForEntity(
-                BASE_URL + "/matches/analyze",
-                requestBody,
-                Object.class))
+                eq(BASE_URL + "/matches/analyze"),
+                any(CoincidenciaProxyController.CoincidenciaAnalisisRequest.class),
+                eq(Object.class)))
             .thenReturn(ResponseEntity.ok(responseBody));
 
         mockMvc.perform(post(CONTROLLER_PATH + "/analyze")
@@ -114,9 +116,9 @@ class CoincidenciaProxyControllerTest {
         String requestBody = "{\"reportePerdidoId\": 1, \"reporteEncontradoId\": 2}";
 
         when(restTemplate.postForEntity(
-                BASE_URL + "/matches/analyze",
-                requestBody,
-                Object.class))
+                eq(BASE_URL + "/matches/analyze"),
+                any(CoincidenciaProxyController.CoincidenciaAnalisisRequest.class),
+                eq(Object.class)))
             .thenThrow(new RuntimeException("Service Error"));
 
         mockMvc.perform(post(CONTROLLER_PATH + "/analyze")

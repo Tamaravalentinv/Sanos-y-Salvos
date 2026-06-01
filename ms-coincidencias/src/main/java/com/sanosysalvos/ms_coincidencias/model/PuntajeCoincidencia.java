@@ -45,6 +45,6 @@ public class PuntajeCoincidencia {
 
         // Normalizar a 0-100 considerando que el máximo posible es:
         Double maxPosible = pesoEspecie + pesoRaza + pesoColor + pesoTamaño + pesoCercaniaGeografica + pesoProximidadFechas;
-        return (total / maxPosible) * 100;
+        return total / maxPosible;
     }
 }
