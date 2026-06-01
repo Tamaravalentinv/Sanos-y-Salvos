@@ -103,7 +103,7 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
 - **Geolocalización**: Tracking de ubicaciones con análisis de zonas de incidencia
 - **Notificaciones Multi-canal**: Email, SMS, Push, notificaciones internas
 - **Autenticación JWT**: Seguridad en todos los microservicios
-- **Pruebas Unitarias**: Suite de 32 tests con ~92% de cobertura de código
+- **Pruebas Unitarias**: Suite de 191 tests across 7 microservices con cobertura promedio de 40.8% (MS Proyectos 72.8%, MS Coincidencias 62.1%)
 - **Docker**: Containerización completa para fácil despliegue
 - **Documentación Completa**: Patrones de arquitectura, estrategia de branching, enlaces a repositorios
 - **Arquetipos Maven**: Plantillas para generar nuevos componentes siguiendo estándares
@@ -419,85 +419,157 @@ mvn test -pl ms-proyectos
 
 ## Pruebas Unitarias y Cobertura de Código
 
-**Estado: COMPLETADAS - 100% COBERTURA EN CONTROLLERS Y SERVICES**
+**191 TESTS IMPLEMENTADOS ACROSS 7 MICROSERVICES**
 
-### MS Proyectos - Suite de Tests Verificada (56 pruebas)
+### Resumen de Cobertura por Módulo (Líneas de Código)
 
-| Componente | Tests | Instrucciones | Líneas | Métodos |
-|-----------|-------|---------------|--------|---------|
-| **TareaController** | 15 | 100% (114/114) | 100% (21/21) | 100% (11/11) |
-| **ProyectoController** | 13 | 100% (103/103) | 100% (19/19) | 100% (10/10) |
-| **TareaService** | 15 | 100% (90/90) | 100% (22/22) | 100% (9/9) |
-| **ProyectoService** | 13 | 100% (85/85) | 100% (21/21) | 100% (8/8) |
-| **TOTAL** | **56** | **100%** | **100%** | **100%** |
+| Módulo | Tests | Líneas Cubiertas | Cobertura | Estado |
+|--------|-------|------------------|-----------|--------|
+| **MS Proyectos** | 56 | 83/114 | **72.8%** | ✅ EXCELENTE |
+| **MS Coincidencias** | 22 | 95/153 | **62.1%** | ✅ CUMPLE |
+| **MS Notificaciones** | 19 | 39/99 | **39.4%** | ⚠️ Mejora requerida |
+| **MS Reportes** | 21 | 90/253 | **35.6%** | ⚠️ Mejora requerida |
+| **MS Usuarios** | 38 | 102/298 | **34.2%** | ⚠️ Mejora requerida |
+| **API Gateway** | 15 | 67/114 | **58.8%** | ⚠️ Casi cumple |
+| **MS Geolocalizacion** | 20 | 34/218 | **15.6%** | ❌ Requiere trabajo |
+| **TOTAL** | **191** | **510/1,249** | **40.8% Promedio** | En progreso |
 
-### Cobertura por Componente
+### Detalle de Tests Implementados
 
-#### Controllers (100% Cobertura)
-- **TareaController**: Todos los 11 métodos cubiertos
-  - Crear, obtener por ID, obtener todos, obtener por proyecto/asignado/estado
-  - Actualizar, eliminar, casos de error (NOT_FOUND)
-  
-- **ProyectoController**: Todos los 10 métodos cubiertos
-  - Crear, obtener por ID, obtener todos, obtener por responsable/estado
-  - Actualizar, eliminar, casos de error (NOT_FOUND)
+#### FASE 2: MS Proyectos (100% Completado)
+- **TareaControllerTest**: 15 tests - Controllers para operaciones CRUD de tareas
+- **ProyectoControllerTest**: 13 tests - Controllers para operaciones CRUD de proyectos
+- **TareaServiceTest**: 15 tests - Servicios con casos de éxito y error
+- **ProyectoServiceTest**: 13 tests - Servicios con validaciones completas
+- **MsProyectosApplicationTests**: 1 test - Contexto de aplicación
+- **Total**: 56 tests, **72.8% cobertura de línea**
 
-#### Services (100% Cobertura)
-- **TareaService**: Todos los 9 métodos cubiertos
-  - Casos de éxito (crear, actualizar, eliminar)
-  - Casos de error (ID no existente)
-  - Listas vacías
-  
-- **ProyectoService**: Todos los 8 métodos cubiertos
-  - Casos de éxito (crear, actualizar, eliminar)
-  - Casos de error (ID no existente)
-  - Listas vacías
+#### FASE 3: Microservicios Restantes (Implementados)
+
+**MS Usuarios (38 tests)**
+- OrganizacionControllerTest: 19 tests
+- UsuarioControllerTest: 18 tests  
+- MsUsuariosApplicationTests: 1 test
+- Cobertura: Controllers 100%, Services ~3% (mocked en tests)
+
+**MS Reportes (21 tests)**
+- ReporteControllerTest: 20 tests
+- MsMascotasApplicationTests: 1 test
+- Cobertura: Controllers 100%, Services ~3% (mocked)
+
+**MS Geolocalizacion (20 tests)**
+- UbicacionControllerTest: 19 tests
+- MsGeolocalizacionApplicationTests: 1 test
+- Cobertura: Controllers 100%, Services ~3% (mocked)
+- Nota: HistorialUbicacionControllerTest y ZonaIncidenciaControllerTest eliminados (duplicados @SpringBootTest)
+
+**MS Coincidencias (22 tests)**
+- CoincidenciaControllerTest: 18 tests
+- CoincidenciaServiceTest: 3 tests
+- MsCoincidenciasApplicationTests: 1 test
+- Cobertura: **62.1% de línea** (Tests de servicio adicionales ayudan)
+
+**MS Notificaciones (19 tests)**
+- NotificacionControllerTest: 18 tests
+- MsNotificacionesApplicationTests: 1 test
+- Cobertura: Controllers 100%, Services ~3% (mocked)
+
+**API Gateway (15 tests)**
+- BFFControllerTest: 14 tests
+- ApiGatewayApplicationTests: 1 test
+- Cobertura: Controllers 100%, Services ~3% (mocked)
 
 ### Características de la Suite de Tests
 
-- **Framework**: JUnit 5 + Mockito
-- **Tests Totales**: 56 pruebas implementadas
-- **Estado**: 0 fallos, 0 errores, 0 skipped
-- **Cobertura**: 100% en controllers y services
-- **Herramientas**: JaCoCo v0.8.10 para reportes, SonarQube v3.10.0.2594 configurado
-- **Commit**: `pruebas unitarias verificadas` (530477e)
+- **Framework**: JUnit 5 + Mockito 5.x
+- **Base de Datos de Tests**: H2 in-memory (@ActiveProfiles("test"))
+- **Tests Totales**: 191 tests implementados
+- **Estado de Ejecución**: 191/191 PASSED ✅
+- **Herramientas**: JaCoCo v0.8.10, SonarQube v3.10.0.2594
+- **Base de datos**: Spring Boot gestiona automáticamente H2 (create-drop)
 
 ### Ejecutar Tests
 
 ```bash
-# Ejecutar todos los tests (56 pruebas)
+# Ejecutar todos los tests (191 total)
+cd c:\Users\tamar\Desktop\Sanos-y-Salvos
 mvn clean test
 
 # Tests de un módulo específico
 mvn test -pl ms-proyectos
+mvn test -pl ms-usuarios
+mvn test -pl ms-reportes
+mvn test -pl ms-geolocalizacion
+mvn test -pl ms-coincidencias
+mvn test -pl ms-notificaciones
+mvn test -pl api-gateway
 
 # Tests de una clase específica
-mvn test -Dtest=TareaControllerTest
-mvn test -Dtest=ProyectoServiceTest
+mvn test -Dtest=CoincidenciaControllerTest
+mvn test -Dtest=UsuarioControllerTest
 ```
 
-### Generar Reporte de Cobertura
+### Generar Reportes de Cobertura
 
 ```bash
-# Ejecutar tests y generar reporte JaCoCo
+# Ejecutar tests y generar reportes JaCoCo
 mvn clean test
 
-# Generar reporte JaCoCo explícitamente
-mvn jacoco:report
+# Reportes disponibles en:
+# {microservice}/target/site/jacoco/index.html
 
-# El reporte se genera en:
-# ms-proyectos/target/site/jacoco/index.html
-
-# Abre en tu navegador para ver:
-# - Detalles de cobertura por clase
-# - Análisis de instrucciones y líneas
-# - Información de métodos cubiertos
-# - Matriz de complejidad
+# Archivos generados por módulo:
+# - jacoco.csv (datos en formato CSV)
+# - jacoco.xml (reporte XML)
+# - index.html (reporte HTML interactivo)
 ```
 
-### Validaciones de Pruebas
+### Análisis de Cobertura - Oportunidades de Mejora
 
-✓ **100% de instrucciones cubiertas** (392/392)
+**Módulos que cumplen 60%+ (✅ OK)**
+- MS Proyectos: 72.8% - Service tests adicionales + coverage config
+- MS Coincidencias: 62.1% - Incluye CoincidenciaServiceTest
+
+**Módulos que requieren mejora (<60%)**
+1. **MS Geolocalizacion (15.6% → Crítico)**
+   - Necesario: +50 tests de servicios (UbicacionService, HistorialUbicacionService, ZonaIncidenciaService)
+   - Estrategia: Añadir UbicacionServiceTest, HistorialUbicacionServiceTest, ZonaIncidenciaServiceTest
+
+2. **MS Reportes (35.6% → Bajo)**
+   - Necesario: +30 tests de servicios
+   - Estrategia: Añadir ReporteServiceTest con casos de validación y error
+
+3. **MS Usuarios (34.2% → Bajo)**
+   - Necesario: +40 tests de servicios
+   - Estrategia: Añadir UsuarioServiceTest, OrganizacionServiceTest, JwtUtilTest
+
+4. **MS Notificaciones (39.4% → Bajo)**
+   - Necesario: +25 tests de servicios
+   - Estrategia: Añadir NotificacionServiceTest
+
+5. **API Gateway (58.8% → Casi)**
+   - Necesario: +10 tests adicionales o servicio coverage
+   - Estrategia: Expandir BFFControllerTest con casos edge
+
+### Patrón de Cobertura Identificado
+
+**Controllers (Cobertura: ~100%)**
+- Todos los controladores tienen tests con MockMvc
+- Casos: éxito (2xx), validación (400), no encontrado (404), error (500)
+- Patrón: `@ExtendWith(MockitoExtension.class)` + `@Mock` servicios
+
+**Services (Cobertura: ~3% - Problema)**
+- Services están mocked en tests de controladores
+- Para mejorar cobertura de servicios: necesario crear ServiceTest independientes
+- Patrón propuesto: `@SpringBootTest` con `@ActiveProfiles("test")` + H2
+
+**Validaciones de Pruebas**
+
+✓ 191/191 tests ejecutados exitosamente
+✓ 0 fallos, 0 errores, 0 skipped
+✓ Todos los módulos compilan sin errores
+✓ H2 database configurada y funcional para todos los tests
+✓ JaCoCo reportes generados para cada módulo
 ✓ **100% de líneas cubiertas** (83/83)
 ✓ **100% de métodos implementados**
 ✓ **Casos de éxito validados**
