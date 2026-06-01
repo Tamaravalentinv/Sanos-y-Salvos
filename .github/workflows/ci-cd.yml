@@ -71,24 +71,36 @@ jobs:
         mysql -h 127.0.0.1 -u root -proot -e "CREATE DATABASE IF NOT EXISTS sanos_recursos_humanos;"
     
     - name: Run Tests and Generate Coverage
-      run: mvn clean test jacoco:report -DskipITs=true -pl "!sanos-microservice-archetype"
+      run: |
+        modules=(
+          "ms-usuarios"
+          "ms-reportes"
+          "ms-geolocalizacion"
+          "ms-coincidencias"
+          "ms-notificaciones"
+          "ms-proyectos"
+          "ms-recursos-humanos"
+          "api-gateway"
+        )
+
+        for module in "${modules[@]}"; do
+          echo "Running tests for ${module}"
+          (cd "${module}" && mvn -B clean test jacoco:report -DskipITs=true)
+        done
       env:
         SPRING_PROFILES_ACTIVE: test
-        SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/sanos_usuarios?allowPublicKeyRetrieval=true&useSSL=false
-        SPRING_DATASOURCE_USERNAME: root
-        SPRING_DATASOURCE_PASSWORD: root
         MAVEN_OPTS: -Xmx1024m
     
     - name: Upload test results
       if: always()
       run: |
-        ls -la target/site/jacoco/ 2>/dev/null || echo "No coverage report found"
-        ls -la target/surefire-reports/ 2>/dev/null || echo "No surefire reports"
+        find . -maxdepth 5 -path "*/target/site/jacoco" -type d -print
+        find . -maxdepth 5 -path "*/target/surefire-reports" -type d -print
     
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
-        files: ./target/site/jacoco/jacoco.xml
+        files: ./**/target/site/jacoco/jacoco.xml
         flags: unittests
         fail_ci_if_error: false
 
@@ -108,7 +120,22 @@ jobs:
         cache: maven
     
     - name: Build all modules
-      run: mvn clean package -DskipTests=true -pl "!sanos-microservice-archetype"
+      run: |
+        modules=(
+          "ms-usuarios"
+          "ms-reportes"
+          "ms-geolocalizacion"
+          "ms-coincidencias"
+          "ms-notificaciones"
+          "ms-proyectos"
+          "ms-recursos-humanos"
+          "api-gateway"
+        )
+
+        for module in "${modules[@]}"; do
+          echo "Building ${module}"
+          (cd "${module}" && mvn -B clean package -DskipTests=true)
+        done
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -121,7 +148,7 @@ jobs:
   docker-build:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_DOCKER_PUSH == 'true'
     
     steps:
     - uses: actions/checkout@v4
