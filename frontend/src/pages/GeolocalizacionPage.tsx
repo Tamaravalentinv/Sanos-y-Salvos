@@ -10,7 +10,11 @@ import { geolocalizacionService } from '@/services/geolocalizacion.service'
 import { reporteService } from '@/services/reporte.service'
 import { ZonaIncidencia, Reporte } from '@/types'
 
-delete (L.Icon.Default.prototype as any)._getIconUrl
+interface LeafletDefaultIconPrototype extends L.Icon.Default {
+  _getIconUrl?: unknown
+}
+
+delete (L.Icon.Default.prototype as LeafletDefaultIconPrototype)._getIconUrl
 L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -41,6 +45,7 @@ const GeolocalizacionPage: React.FC = () => {
   const [zonas, setZonas] = useState<ZonaIncidencia[]>([])
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [clickPos, setClickPos] = useState<ClickPos | null>(null)
 
   useEffect(() => {
@@ -49,6 +54,7 @@ const GeolocalizacionPage: React.FC = () => {
 
   const loadData = async () => {
     setLoading(true)
+    setError(null)
     try {
       const [zonasData, reportesData] = await Promise.allSettled([
         geolocalizacionService.getZonasIncidencia(),
@@ -65,6 +71,11 @@ const GeolocalizacionPage: React.FC = () => {
               (r.ubicacion.latitud !== 0 || r.ubicacion.longitud !== 0)
           )
         )
+      } else {
+        setError('No se pudieron cargar los reportes del mapa')
+      }
+      if (zonasData.status === 'rejected' && reportesData.status === 'rejected') {
+        setError('No se pudo cargar la informacion del mapa')
       }
     } finally {
       setLoading(false)
@@ -100,6 +111,13 @@ const GeolocalizacionPage: React.FC = () => {
                 <div className="text-center">
                   <div className="text-5xl mb-3">🗺️</div>
                   <p className="text-slate-500 text-sm animate-pulse">Cargando mapa…</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="h-full flex items-center justify-center bg-slate-50">
+                <div className="text-center">
+                  <p className="text-slate-600 text-sm font-semibold">{error}</p>
+                  <Button variant="primary" size="sm" className="mt-4" onClick={loadData}>Reintentar</Button>
                 </div>
               </div>
             ) : (
@@ -287,7 +305,7 @@ const GeolocalizacionPage: React.FC = () => {
                 <p className="text-xs font-semibold text-primary-700 mb-2">¿Cómo usar el mapa?</p>
                 <ul className="text-xs text-primary-600 space-y-1.5">
                   <li>🖱️ Haz clic en cualquier punto del mapa</li>
-                  <li>📌 Selecciona "Crear reporte aquí"</li>
+                  <li>📌 Selecciona Crear reporte aqui</li>
                   <li>🐾 Las coordenadas se llenan automáticamente</li>
                   <li>🔴 Marcadores rojos = mascotas perdidas</li>
                   <li>🟢 Marcadores verdes = mascotas encontradas</li>

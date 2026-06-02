@@ -28,6 +28,27 @@ interface BackendReporte {
   emailContacto?: string
 }
 
+interface CreateReporteInput {
+  tipo: string
+  descripcion?: string
+  fotoBase64?: string
+  usuarioId: string
+  mascota?: {
+    [key: string]: string | undefined
+    nombre?: string
+    especie?: string
+    raza?: string
+    color?: string
+  }
+  ubicacion?: {
+    latitud?: number
+    longitud?: number
+    direccion?: string
+    ciudad?: string
+    pais?: string
+  }
+}
+
 function mapTipo(t: string): 'PERDIDO' | 'ENCONTRADO' {
   return t === 'PERDIDA' ? 'PERDIDO' : 'ENCONTRADO'
 }
@@ -134,7 +155,7 @@ export const reporteService = {
     return mapReporte(response.data)
   },
 
-  createReporte: async (data: any): Promise<Reporte> => {
+  createReporte: async (data: CreateReporteInput): Promise<Reporte> => {
     const body = {
       tipoReporte: data.tipo === 'PERDIDO' ? 'PERDIDA' : 'ENCONTRADA',
       usuarioId: parseInt(data.usuarioId) || 1,

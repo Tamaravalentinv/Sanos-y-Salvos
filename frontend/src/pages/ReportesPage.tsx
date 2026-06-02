@@ -24,6 +24,7 @@ const ReportesPage: React.FC = () => {
   const [searchParams] = useSearchParams()
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '0'))
   const navigate = useNavigate()
@@ -34,12 +35,15 @@ const ReportesPage: React.FC = () => {
 
   const loadReportes = async () => {
     setLoading(true)
+    setError(null)
     try {
       const res = await reporteService.getAllReportes({ ...filters, page, size: 12 })
       setReportes(res.content)
       setTotal(res.totalElements)
     } catch {
-      toast.error('Error al cargar reportes')
+      const message = 'Error al cargar reportes'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -105,6 +109,12 @@ const ReportesPage: React.FC = () => {
               <div className="h-3 bg-slate-100 rounded w-1/2" />
             </Card>
           ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-20">
+          <p className="text-slate-600 font-semibold text-lg">{error}</p>
+          <p className="text-slate-400 text-sm mt-1">Intenta nuevamente.</p>
+          <Button variant="primary" className="mt-6" onClick={loadReportes}>Reintentar</Button>
         </div>
       ) : reportes.length === 0 ? (
         <div className="text-center py-20">

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { Notificacion } from '@/types'
+import { notificacionService } from '@/services/notificacion.service'
 
 const STORAGE_KEY = 'sanos_notificaciones'
 
@@ -22,8 +23,8 @@ interface NotificacionStore {
   isLoading: boolean
   error: string | null
 
-  loadNotificaciones: () => Promise<void>
-  loadNoLeidasCount: () => Promise<void>
+  loadNotificaciones: (usuarioId?: string) => Promise<void>
+  loadNoLeidasCount: (usuarioId?: string) => Promise<void>
   marcarComoLeida: (id: string) => Promise<void>
   marcarTodasComoLeidas: () => Promise<void>
   deleteNotificacion: (id: string) => Promise<void>
@@ -37,17 +38,50 @@ export const useNotificacionStore = create<NotificacionStore>((set, get) => ({
   isLoading: false,
   error: null,
 
-  loadNotificaciones: async () => {
+  loadNotificaciones: async (usuarioId?: string) => {
+    set({ isLoading: true, error: null })
     const stored = loadFromStorage()
-    set({ notificaciones: stored, isLoading: false })
+    if (!usuarioId) {
+      set({ notificaciones: stored, isLoading: false })
+      return
+    }
+
+    try {
+      const backend = await notificacionService.getNotificaciones(usuarioId)
+      const localOnly = stored.filter(
+        (local) => !backend.some((remote) => remote.id === local.id)
+      )
+      const notificaciones = [...localOnly, ...backend]
+      saveToStorage(notificaciones)
+      set({ notificaciones, isLoading: false })
+      await get().loadNoLeidasCount(usuarioId)
+    } catch {
+      set({
+        notificaciones: stored,
+        error: 'No se pudieron sincronizar las notificaciones',
+        isLoading: false,
+      })
+    }
   },
 
-  loadNoLeidasCount: async () => {
+  loadNoLeidasCount: async (usuarioId?: string) => {
+    if (usuarioId) {
+      try {
+        const noLeidas = await notificacionService.getNotificacionesNoLeidas(usuarioId)
+        set({ noLeidasCount: noLeidas.length })
+        return
+      } catch {
+        // Fall back to local state.
+      }
+    }
     const count = get().notificaciones.filter(n => n.estado === 'NO_LEIDA').length
     set({ noLeidasCount: count })
   },
 
   marcarComoLeida: async (id: string) => {
+    if (!id.startsWith('match_') && !id.startsWith('resolucion_')) {
+      await notificacionService.marcarComoLeida(id).catch(() => undefined)
+    }
     const notificaciones = get().notificaciones.map(n =>
       n.id === id ? { ...n, estado: 'LEIDA' as const } : n
     )
@@ -63,6 +97,9 @@ export const useNotificacionStore = create<NotificacionStore>((set, get) => ({
   },
 
   deleteNotificacion: async (id: string) => {
+    if (!id.startsWith('match_') && !id.startsWith('resolucion_')) {
+      await notificacionService.deleteNotificacion(id).catch(() => undefined)
+    }
     const notificaciones = get().notificaciones.filter(n => n.id !== id)
     saveToStorage(notificaciones)
     set({ notificaciones })

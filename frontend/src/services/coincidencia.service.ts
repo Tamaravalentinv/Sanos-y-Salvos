@@ -1,45 +1,53 @@
 import api from './api.client'
 import { Coincidencia } from '@/types'
 
+interface BffCoincidenciasResponse {
+  totalCoincidencias?: number
+  coincidencias?: Coincidencia[]
+  grupos?: Array<{ coincidencias?: Coincidencia[] }>
+}
+
+function flattenCoincidencias(data: BffCoincidenciasResponse): Coincidencia[] {
+  if (Array.isArray(data.coincidencias)) return data.coincidencias
+  if (Array.isArray(data.grupos)) {
+    return data.grupos.flatMap((grupo) => grupo.coincidencias ?? [])
+  }
+  return []
+}
+
 export const coincidenciaService = {
-  getCoincidendasRecientes: async (limit: number = 10): Promise<Coincidencia[]> => {
-    const response = await api.get<Coincidencia[]>('/coincidencias/recientes', {
-      params: { limit },
+  getCoincidenciasRecientes: async (limit = 10, userId = '1'): Promise<Coincidencia[]> => {
+    const response = await api.get<BffCoincidenciasResponse>('/bff/coincidencias', {
+      params: { userId },
     })
-    return response.data
+    return flattenCoincidencias(response.data).slice(0, limit)
   },
 
-  getCoincidendasPorReporte: async (reporteId: string): Promise<Coincidencia[]> => {
-    const response = await api.get<Coincidencia[]>(`/coincidencias/reporte/${reporteId}`)
-    return response.data
-  },
-
-  confirmarCoincidencia: async (coincidenciaId: string): Promise<Coincidencia> => {
-    const response = await api.put<Coincidencia>(
-      `/coincidencias/${coincidenciaId}/confirmar`,
-      {}
+  getCoincidenciasPorReporte: async (reporteId: string, userId = '1'): Promise<Coincidencia[]> => {
+    const coincidencias = await coincidenciaService.getCoincidenciasRecientes(100, userId)
+    return coincidencias.filter(
+      (coincidencia) =>
+        coincidencia.reportePerdido?.id === reporteId ||
+        coincidencia.reporteEncontrado?.id === reporteId
     )
-    return response.data
   },
 
-  rechazarCoincidencia: async (coincidenciaId: string): Promise<void> => {
-    await api.put(`/coincidencias/${coincidenciaId}/rechazar`, {})
-  },
-
-  buscarCoincidencias: async (reporteId: string): Promise<Coincidencia[]> => {
-    const response = await api.post<Coincidencia[]>(
-      `/coincidencias/buscar/${reporteId}`,
-      {}
-    )
-    return response.data
-  },
-
-  getEstadisticas: async (): Promise<{
+  getEstadisticas: async (userId = '1'): Promise<{
     totalCoincidencias: number
     coincidenciasConfirmadas: number
     tasaExito: number
   }> => {
-    const response = await api.get('/coincidencias/estadisticas')
-    return response.data
+    const response = await api.get<BffCoincidenciasResponse>('/bff/coincidencias', {
+      params: { userId },
+    })
+    const coincidencias = flattenCoincidencias(response.data)
+    const totalCoincidencias = response.data.totalCoincidencias ?? coincidencias.length
+    const coincidenciasConfirmadas = coincidencias.filter((c) => c.estado === 'CONFIRMADA').length
+
+    return {
+      totalCoincidencias,
+      coincidenciasConfirmadas,
+      tasaExito: totalCoincidencias ? coincidenciasConfirmadas / totalCoincidencias : 0,
+    }
   },
 }

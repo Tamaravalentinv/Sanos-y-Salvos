@@ -8,15 +8,14 @@ export const APP_CONFIG = {
 } as const;
 
 export const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 30000,
   withCredentials: true,
 } as const;
 
 export const AUTH_CONFIG = {
-  tokenKey: 'auth_token',
-  userKey: 'auth_user',
-  refreshTokenKey: 'refresh_token',
+  tokenKey: 'token',
+  userKey: 'user',
 } as const;
 
 export const MAP_CONFIG = {

@@ -41,11 +41,13 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<EstadisticasGlobales | null>(null)
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => { loadData() }, [])
 
   const loadData = async () => {
     setLoading(true)
+    setError(null)
     try {
       const [statsData, reportesData] = await Promise.all([
         dashboardService.getEstadisticasGlobales().catch(() => null),
@@ -54,7 +56,9 @@ const DashboardPage: React.FC = () => {
       if (statsData) setStats(statsData)
       setReportes(reportesData.content)
     } catch {
-      toast.error('Error al cargar el dashboard')
+      const message = 'Error al cargar el dashboard'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -126,6 +130,11 @@ const DashboardPage: React.FC = () => {
 
           {loading ? (
             <Card><Skeleton /></Card>
+          ) : error ? (
+            <Card className="text-center py-12">
+              <p className="text-slate-600 font-semibold">{error}</p>
+              <Button variant="primary" size="sm" className="mt-4" onClick={loadData}>Reintentar</Button>
+            </Card>
           ) : reportes.length === 0 ? (
             <Card className="text-center py-12">
               <div className="text-5xl mb-3">🔍</div>

@@ -1,7 +1,23 @@
 import { create } from 'zustand'
-import { User, AuthResponse } from '@/types'
+import { AxiosError } from 'axios'
 import { apiClient } from '@/services/api.client'
 import { authService } from '@/services/auth.service'
+import { AUTH_CONFIG } from '@/config'
+import { ApiError, AuthResponse, RegisterRequest, User } from '@/types'
+
+function getStoredUser(): User | null {
+  try {
+    const userStr = localStorage.getItem(AUTH_CONFIG.userKey)
+    return userStr ? JSON.parse(userStr) : null
+  } catch {
+    return null
+  }
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  const axiosError = error as AxiosError<ApiError>
+  return axiosError.response?.data?.message || fallback
+}
 
 interface AuthStore {
   user: User | null
@@ -9,21 +25,22 @@ interface AuthStore {
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
-  
-  // Actions
   login: (email: string, password: string) => Promise<void>
-  register: (data: any) => Promise<void>
-  logout: () => void
+  register: (data: RegisterRequest) => Promise<void>
+  logout: () => Promise<void>
   setUser: (user: User) => void
   setToken: (token: string) => void
   loadUserFromStorage: () => Promise<void>
   clearError: () => void
 }
 
+const storedToken = localStorage.getItem(AUTH_CONFIG.tokenKey)
+const storedUser = getStoredUser()
+
 export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
-  token: null,
-  isAuthenticated: false,
+  user: storedUser,
+  token: storedToken,
+  isAuthenticated: Boolean(storedToken && storedUser),
   isLoading: false,
   error: null,
 
@@ -32,53 +49,57 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const response: AuthResponse = await authService.login({ email, password })
       apiClient.setAuthToken(response.token)
-      localStorage.setItem('user', JSON.stringify(response.user))
+      localStorage.setItem(AUTH_CONFIG.userKey, JSON.stringify(response.user))
       set({
         user: response.user,
         token: response.token,
         isAuthenticated: true,
         isLoading: false,
       })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Error al iniciar sesión'
-      set({ error: errorMessage, isLoading: false })
+    } catch (error: unknown) {
+      set({ error: getErrorMessage(error, 'Error al iniciar sesion'), isLoading: false })
       throw error
     }
   },
 
-  register: async (data: any) => {
+  register: async (data: RegisterRequest) => {
     set({ isLoading: true, error: null })
     try {
       const response: AuthResponse = await authService.register(data)
       apiClient.setAuthToken(response.token)
-      localStorage.setItem('user', JSON.stringify(response.user))
+      localStorage.setItem(AUTH_CONFIG.userKey, JSON.stringify(response.user))
       set({
         user: response.user,
         token: response.token,
         isAuthenticated: true,
         isLoading: false,
       })
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Error al registrarse'
-      set({ error: errorMessage, isLoading: false })
+    } catch (error: unknown) {
+      set({ error: getErrorMessage(error, 'Error al registrarse'), isLoading: false })
       throw error
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+  logout: async () => {
+    try {
+      await authService.logout()
+    } catch {
+      // Keep logout reliable even if the session endpoint is unavailable.
+    }
+    localStorage.removeItem(AUTH_CONFIG.tokenKey)
+    localStorage.removeItem(AUTH_CONFIG.userKey)
     apiClient.clearAuthToken()
     set({
       user: null,
       token: null,
       isAuthenticated: false,
+      error: null,
     })
   },
 
   setUser: (user: User) => {
     set({ user, isAuthenticated: true })
-    localStorage.setItem('user', JSON.stringify(user))
+    localStorage.setItem(AUTH_CONFIG.userKey, JSON.stringify(user))
   },
 
   setToken: (token: string) => {
@@ -87,20 +108,24 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   loadUserFromStorage: async () => {
+    set({ isLoading: true })
     try {
-      const token = localStorage.getItem('token')
-      const userStr = localStorage.getItem('user')
-      if (token && userStr) {
-        const user = JSON.parse(userStr)
+      const token = localStorage.getItem(AUTH_CONFIG.tokenKey)
+      const user = getStoredUser()
+      if (token && user) {
         apiClient.setAuthToken(token)
-        set({ user, token, isAuthenticated: true })
+        const currentUser = await authService.getCurrentUser().catch(() => user)
+        localStorage.setItem(AUTH_CONFIG.userKey, JSON.stringify(currentUser))
+        set({ user: currentUser, token, isAuthenticated: true, isLoading: false })
+        return
       }
-    } catch (error) {
-      console.error('Error loading user from storage:', error)
+    } catch {
+      localStorage.removeItem(AUTH_CONFIG.tokenKey)
+      localStorage.removeItem(AUTH_CONFIG.userKey)
+      apiClient.clearAuthToken()
     }
+    set({ user: null, token: null, isAuthenticated: false, isLoading: false })
   },
 
-  clearError: () => {
-    set({ error: null })
-  },
+  clearError: () => set({ error: null }),
 }))

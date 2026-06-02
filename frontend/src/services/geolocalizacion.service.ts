@@ -15,6 +15,16 @@ interface BackendZona {
   esActiva: boolean
 }
 
+export interface UbicacionCercana {
+  id: number
+  reporteId?: number
+  latitud: number
+  longitud: number
+  direccion?: string
+  ciudad?: string
+  comuna?: string
+}
+
 function mapZona(z: BackendZona): ZonaIncidencia {
   return {
     id: String(z.id),
@@ -40,18 +50,9 @@ export const geolocalizacionService = {
     latitud: number,
     longitud: number,
     radioKm = 5
-  ) => {
-    const response = await api.get('/geolocalizacion/cercania', {
+  ): Promise<UbicacionCercana[]> => {
+    const response = await api.get<UbicacionCercana[]>('/geolocalizacion/cercania', {
       params: { latitud, longitud, radioKm },
-    })
-    return response.data
-  },
-
-  rastrearUbicacion: async (reporteId: string, latitud: number, longitud: number) => {
-    const response = await api.post('/geolocalizacion/rastrear', {
-      reporteId,
-      latitud,
-      longitud,
     })
     return response.data
   },

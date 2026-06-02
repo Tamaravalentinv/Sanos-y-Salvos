@@ -6,6 +6,8 @@ import Input from '@/components/Input'
 import Select from '@/components/Select'
 import Button from '@/components/Button'
 import toast from 'react-hot-toast'
+import { AxiosError } from 'axios'
+import { ApiError } from '@/types'
 
 const USER_TYPES = [
   { value: 'CIUDADANO',    label: '🏠 Ciudadano',               desc: 'Persona que perdió o encontró una mascota' },
@@ -56,8 +58,9 @@ const RegisterPage: React.FC = () => {
       })
       toast.success('¡Cuenta creada exitosamente!')
       navigate('/dashboard')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Error al registrarse')
+    } catch (err: unknown) {
+      const error = err as AxiosError<ApiError>
+      toast.error(error.response?.data?.message || 'Error al registrarse')
     } finally {
       setLoading(false)
     }

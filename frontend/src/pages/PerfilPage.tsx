@@ -1,62 +1,54 @@
-import React, { useState, useEffect } from 'react'
-import { FiEdit2, FiSave, FiX, FiLock, FiUser, FiMail, FiPhone, FiShield } from 'react-icons/fi'
-import Card from '@/components/Card'
+import React, { useEffect, useState } from 'react'
+import { FiEdit2, FiMail, FiPhone, FiSave, FiShield, FiUser, FiX } from 'react-icons/fi'
+import toast from 'react-hot-toast'
 import Button from '@/components/Button'
+import Card from '@/components/Card'
 import Input from '@/components/Input'
 import { useAuthStore } from '@/context/authStore'
 import { authService } from '@/services/auth.service'
 import { User } from '@/types'
 import { getInitials } from '@/utils/helpers'
-import toast from 'react-hot-toast'
 
 const TIPO_LABEL: Record<string, string> = {
-  CIUDADANO:     'Ciudadano',
-  ORGANIZACION:  'Organización',
-  VETERINARIA:   'Veterinaria',
-  ADMINISTRADOR: 'Administrador',
+  CIUDADANO: 'Ciudadano',
+  CLINICA: 'Clinica veterinaria',
+  REFUGIO: 'Refugio',
+  MUNICIPALIDAD: 'Municipalidad',
+}
+
+const emptyUser: User = {
+  id: '',
+  nombre: '',
+  apellido: '',
+  email: '',
+  telefono: '',
+  tipoUsuario: 'CIUDADANO',
 }
 
 const PerfilPage: React.FC = () => {
   const { user, setUser } = useAuthStore()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [changing, setChanging] = useState(false)
-  const [formData, setFormData] = useState<User>(
-    user || { id: '', nombre: '', apellido: '', email: '', telefono: '', tipoUsuario: 'CIUDADANO' }
-  )
-  const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' })
+  const [formData, setFormData] = useState<User>(user ?? emptyUser)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  useEffect(() => { if (user) setFormData(user) }, [user])
+  useEffect(() => {
+    if (user) setFormData(user)
+  }, [user])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
-  }
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setPasswordData(prev => ({ ...prev, [name]: value }))
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
   }
 
   const validateProfile = () => {
-    const e: Record<string, string> = {}
-    if (!formData.nombre.trim()) e.nombre = 'El nombre es requerido'
-    if (!formData.apellido.trim()) e.apellido = 'El apellido es requerido'
-    if (!formData.email.includes('@')) e.email = 'Email inválido'
-    setErrors(e)
-    return Object.keys(e).length === 0
-  }
-
-  const validatePassword = () => {
-    const e: Record<string, string> = {}
-    if (!passwordData.oldPassword) e.oldPassword = 'Contraseña actual requerida'
-    if (passwordData.newPassword.length < 6) e.newPassword = 'Mínimo 6 caracteres'
-    if (passwordData.newPassword !== passwordData.confirmPassword) e.confirmPassword = 'Las contraseñas no coinciden'
-    setErrors(e)
-    return Object.keys(e).length === 0
+    const nextErrors: Record<string, string> = {}
+    if (!formData.nombre.trim()) nextErrors.nombre = 'El nombre es requerido'
+    if (!formData.apellido.trim()) nextErrors.apellido = 'El apellido es requerido'
+    if (!formData.email.includes('@')) nextErrors.email = 'Email invalido'
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -68,25 +60,10 @@ const PerfilPage: React.FC = () => {
       setUser(updated)
       setEditing(false)
       toast.success('Perfil actualizado exitosamente')
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error al actualizar perfil')
+    } catch {
+      toast.error('Error al actualizar perfil')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validatePassword()) return
-    setChanging(true)
-    try {
-      await authService.changePassword(passwordData.oldPassword, passwordData.newPassword)
-      setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' })
-      toast.success('Contraseña actualizada exitosamente')
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error al cambiar contraseña')
-    } finally {
-      setChanging(false)
     }
   }
 
@@ -95,7 +72,7 @@ const PerfilPage: React.FC = () => {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500 mx-auto mb-3" />
-          <p className="text-slate-500 text-sm">Cargando perfil…</p>
+          <p className="text-slate-500 text-sm">Cargando perfil...</p>
         </div>
       </div>
     )
@@ -103,15 +80,12 @@ const PerfilPage: React.FC = () => {
 
   return (
     <div className="space-y-6 fade-in max-w-2xl">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Mi Perfil</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Administra tu información personal y seguridad</p>
+        <p className="text-slate-500 text-sm mt-0.5">Administra tu informacion personal</p>
       </div>
 
-      {/* Profile card */}
       <Card>
-        {/* Avatar section */}
         <div className="flex items-center gap-5 pb-5 border-b border-slate-100">
           <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-700 text-white rounded-2xl flex items-center justify-center font-bold text-2xl shadow-md flex-shrink-0">
             {getInitials(user.nombre, user.apellido)}
@@ -130,7 +104,6 @@ const PerfilPage: React.FC = () => {
           )}
         </div>
 
-        {/* Static info or edit form */}
         {editing ? (
           <form onSubmit={handleUpdateProfile} className="space-y-4 pt-5">
             <div className="grid grid-cols-2 gap-4">
@@ -141,7 +114,7 @@ const PerfilPage: React.FC = () => {
             </div>
             <Input label="Email" type="email" name="email" value={formData.email}
               onChange={handleChange} error={errors.email} icon={<FiMail size={15} />} />
-            <Input label="Teléfono" type="tel" name="telefono" value={formData.telefono || ''}
+            <Input label="Telefono" type="tel" name="telefono" value={formData.telefono || ''}
               onChange={handleChange} icon={<FiPhone size={15} />} />
             <div className="flex gap-2 pt-2">
               <Button type="submit" variant="primary" loading={loading} className="flex-1">
@@ -157,9 +130,9 @@ const PerfilPage: React.FC = () => {
             {[
               { icon: <FiUser size={15} />, label: 'Nombre', value: `${user.nombre} ${user.apellido}` },
               { icon: <FiMail size={15} />, label: 'Email', value: user.email },
-              { icon: <FiPhone size={15} />, label: 'Teléfono', value: user.telefono || '—' },
+              { icon: <FiPhone size={15} />, label: 'Telefono', value: user.telefono || '-' },
               { icon: <FiShield size={15} />, label: 'Tipo', value: TIPO_LABEL[user.tipoUsuario] ?? user.tipoUsuario },
-            ].map(item => (
+            ].map((item) => (
               <div key={item.label} className="flex items-start gap-3 bg-slate-50 rounded-xl px-4 py-3">
                 <div className="text-primary-500 mt-0.5">{item.icon}</div>
                 <div>
@@ -172,30 +145,8 @@ const PerfilPage: React.FC = () => {
         )}
       </Card>
 
-      {/* Change password */}
-      <Card>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center">
-            <FiLock size={17} className="text-amber-600" />
-          </div>
-          <h3 className="font-bold text-slate-800">Cambiar Contraseña</h3>
-        </div>
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <Input label="Contraseña actual" type="password" name="oldPassword"
-            value={passwordData.oldPassword} onChange={handlePasswordChange} error={errors.oldPassword} />
-          <Input label="Nueva contraseña" type="password" name="newPassword"
-            value={passwordData.newPassword} onChange={handlePasswordChange} error={errors.newPassword} />
-          <Input label="Confirmar nueva contraseña" type="password" name="confirmPassword"
-            value={passwordData.confirmPassword} onChange={handlePasswordChange} error={errors.confirmPassword} />
-          <Button type="submit" variant="accent" loading={changing} className="w-full">
-            Actualizar contraseña
-          </Button>
-        </form>
-      </Card>
-
-      {/* Account info */}
       <Card className="bg-slate-50 border border-slate-200">
-        <h3 className="font-semibold text-slate-700 text-sm mb-3">Información de la cuenta</h3>
+        <h3 className="font-semibold text-slate-700 text-sm mb-3">Informacion de la cuenta</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-slate-500">ID</span>
@@ -203,7 +154,7 @@ const PerfilPage: React.FC = () => {
           </div>
           {user.organizacion && (
             <div className="flex justify-between">
-              <span className="text-slate-500">Organización</span>
+              <span className="text-slate-500">Organizacion</span>
               <span className="font-semibold text-slate-800">{user.organizacion}</span>
             </div>
           )}

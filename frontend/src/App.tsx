@@ -22,7 +22,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import Layout from '@/components/Layout'
 
 function App() {
-  const { isAuthenticated, loadUserFromStorage } = useAuthStore()
+  const { isAuthenticated, user, loadUserFromStorage } = useAuthStore()
   const { loadNotificaciones, loadNoLeidasCount } = useNotificacionStore()
 
   useEffect(() => {
@@ -30,19 +30,19 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadNotificaciones()
-      loadNoLeidasCount()
+    if (isAuthenticated && user?.id) {
+      loadNotificaciones(user.id)
+      loadNoLeidasCount(user.id)
       
       // Reload notificaciones every 30 seconds
       const interval = setInterval(() => {
-        loadNotificaciones()
-        loadNoLeidasCount()
+        loadNotificaciones(user.id)
+        loadNoLeidasCount(user.id)
       }, 30000)
 
       return () => clearInterval(interval)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user?.id])
 
   return (
     <>

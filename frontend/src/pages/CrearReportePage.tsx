@@ -10,8 +10,9 @@ import MapPicker from '@/components/MapPicker'
 import { reporteService } from '@/services/reporte.service'
 import { useAuthStore } from '@/context/authStore'
 import { useNotificacionStore } from '@/context/notificacionStore'
-import { Notificacion } from '@/types'
+import { ApiError, Notificacion } from '@/types'
 import toast from 'react-hot-toast'
+import { AxiosError } from 'axios'
 
 function calcularDistanciaKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371
@@ -262,8 +263,9 @@ const CrearReportePage: React.FC = () => {
       }
 
       navigate('/mapa')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Error al crear el reporte')
+    } catch (err: unknown) {
+      const error = err as AxiosError<ApiError>
+      toast.error(error.response?.data?.message || 'Error al crear el reporte')
     } finally {
       setLoading(false)
     }

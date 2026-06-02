@@ -25,15 +25,4 @@ export const authService = {
     const response = await api.put<User>(`/usuarios/${userId}`, data)
     return response.data
   },
-
-  changePassword: async (oldPassword: string, newPassword: string): Promise<void> => {
-    await api.post('/usuarios/auth/change-password', {
-      oldPassword,
-      newPassword,
-    })
-  },
-
-  resetPassword: async (email: string): Promise<void> => {
-    await api.post('/usuarios/auth/reset-password', { email })
-  },
 }

@@ -1,11 +1,18 @@
-// Test setup y configuración
-// Aquí se pueden agregar helpers globales para tests
+import '@testing-library/jest-dom/vitest'
+import { cleanup } from '@testing-library/react'
+import { afterEach } from 'vitest'
+
+afterEach(() => {
+  cleanup()
+  localStorage.clear()
+})
 
 export const mockUser = {
   id: '1',
   email: 'test@example.com',
-  nombre: 'Test User',
-  rol: 'usuario',
-};
+  nombre: 'Test',
+  apellido: 'User',
+  tipoUsuario: 'CIUDADANO',
+} as const
 
-export const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+export const mockToken = 'test-token'
