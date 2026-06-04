@@ -29,13 +29,14 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
   - Código fuente organizado en `/api-gateway/src/`
   - Archivos de configuración presentes (pom.xml, Dockerfile, application.properties)
 
-- [x] Microservicios - Estructura validada (6 servicios)
+- [x] Microservicios - Estructura validada (7 servicios)
   - MS Autenticación - Código organizado, configuración, README.md
   - MS Geolocalizacion - Código organizado, configuración, README.md
   - MS Reportes - Código organizado, configuración, README.md
   - MS Notificaciones - Código organizado, configuración, README.md
   - MS Proyectos - Código organizado, configuración, README.md
   - MS Coincidencias - Código organizado, configuración, README.md
+  - MS Recursos Humanos - Código organizado, configuración, README.md
   - Todos con instrucciones de ejecución y testing
 
 
@@ -46,9 +47,9 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
 
 
 - [x] Documentación generada
-  - ANALISIS_PATRONES_ARQUETIPOS.md - Análisis de patrones y arquetipos
-  - PLAN_BRANCHING.md - Estrategia de branching Git
   - repositorios.txt - Enlaces y descripciones de repositorios
+  - README.md y README por componente
+  - sanos-microservice-archetype/ARCHETYPE-USAGE.md - Uso del arquetipo
 
 ### Resumen de Componentes
 
@@ -61,7 +62,8 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
 | MS Reportes | Operativo | Docker activo, README.md |
 | MS Notificaciones | Operativo | Docker activo, README.md |
 | MS Proyectos | Operativo | Docker activo, README.md |
-| MS Coincidencias | Operativo | Docker activo (aislado), README.md |
+| MS Coincidencias | Operativo | Docker activo, no enrutado por API Gateway |
+| MS Recursos Humanos | Operativo | Docker activo, README.md |
 | Arquetipos Maven | Disponibles | Plantillas listos para usar |
 | Base de Datos | Operativa | MySQL 8.0 con scripts iniciales |
 
@@ -87,12 +89,13 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
 - **MS Reportes**: Gestión de reportes de mascotas perdidas/encontradas
 - **MS Notificaciones**: Sistema multi-canal (email, SMS, push)
 - **MS Proyectos**: Administración de proyectos y tareas
-- **MS Coincidencias**: Motor de matching inteligente (aislado internamente)
+- **MS Coincidencias**: Motor de matching inteligente, no enrutado por API Gateway
+- **MS Recursos Humanos**: Gestión de empleados, departamentos y permisos
 
 ### Arquetipos Maven
-- **Ubicación**: `/archetipos`
+- **Ubicación**: `/sanos-microservice-archetype`
 - **Descripción**: Plantillas para generar nuevos microservicios
-- **Plantillas disponibles**: arquetipo-base-microservicio
+- **Plantillas disponibles**: sanos-microservice-archetype
 - **Uso**: Base para nuevos proyectos siguiendo estándares Sanos y Salvos
 
 ## Características
@@ -103,7 +106,7 @@ Plataforma integral de recuperación de mascotas perdidas basada en microservici
 - **Geolocalización**: Tracking de ubicaciones con análisis de zonas de incidencia
 - **Notificaciones Multi-canal**: Email, SMS, Push, notificaciones internas
 - **Autenticación JWT**: Seguridad en todos los microservicios
-- **Pruebas Unitarias**: Suite de 320 tests en 8 componentes backend con cobertura de linea superior al 60% en todos los microservicios.
+- **Pruebas Unitarias**: Suite de 332 tests backend y 13 tests frontend, con cobertura de línea superior al 60% en todos los componentes.
 - **Docker**: Containerización completa para fácil despliegue
 - **Documentación Completa**: Patrones de arquitectura, estrategia de branching, enlaces a repositorios
 - **Arquetipos Maven**: Plantillas para generar nuevos componentes siguiendo estándares
@@ -122,9 +125,10 @@ Sistema de **7 microservicios** + API Gateway (8 componentes total):
 | **MS Coincidencias** | 8082* | Motor de matching inteligente (6-factor scoring) | Interno (vía MS Reportes) |
 | **MS Notificaciones** | 8085 | Sistema de notificaciones multi-canal | Público (API Gateway) |
 | **MS Proyectos** | 8086 | Gestión de proyectos y tareas de trabajo | Público (API Gateway) |
+| **MS Recursos Humanos** | 8087 | Gestión de empleados, departamentos y permisos | Público (API Gateway) |
 | **API Gateway** | 8080 | BFF con seguridad, routing y circuit breaker | Público |
 
-*MS Coincidencias está aislado del API Gateway. Solo es accesible internamente a través de MS Reportes via CoincidenciaProxyController.
+*MS Coincidencias no se enruta públicamente desde el API Gateway. En desarrollo local y Docker Compose, su puerto `8082` está publicado para diagnóstico.
 ## Enlaces a Repositorios
 
 Ver archivo `repositorios.txt` para:
@@ -140,25 +144,19 @@ Ver archivo `repositorios.txt` para:
 
 El proyecto incluye documentación completa:
 
-### Documentos Generados
+### Documentos Disponibles
 
-1. **ANALISIS_PATRONES_ARQUETIPOS.md**
-   - Análisis de patrones de arquitectura implementados
-   - Descripción de arquetipos Maven disponibles
-   - Recomendaciones para desarrollo futuro
-   - Matriz de patrones y características
-
-2. **PLAN_BRANCHING.md**
-   - Estrategia de branching Git para el proyecto
-   - Nomenclatura de ramas
-   - Flujo de trabajo para features, bugfixes y releases
-   - Checklist de validación para cambios
-
-3. **repositorios.txt**
+1. **repositorios.txt**
    - Enlaces a todos los repositorios de componentes
    - Descripciones técnicas de cada módulo
    - Arquitectura de componentes con puertos y tecnologías
    - Instrucciones de configuración
+
+2. **sanos-microservice-archetype/README.md**
+   - Descripción y estructura del arquetipo de microservicios
+
+3. **sanos-microservice-archetype/ARCHETYPE-USAGE.md**
+   - Instrucciones para instalar y utilizar el arquetipo
 
 ### README por Componente
 
@@ -167,9 +165,9 @@ Cada componente tiene su propio README.md:
 - `/ms-*/README.md` - Instrucciones de cada microservicio
 - Todos con instrucciones de instalación, configuración y ejecución
 - Documentación sin emojis, formato profesional
-### Aislamiento de MS Coincidencias
+### Enrutamiento de MS Coincidencias
 
-**Cambio arquitectónico importante:** El microservicio de coincidencias ha sido removido del API Gateway público y ahora funciona de forma interna:
+El microservicio de coincidencias no está expuesto mediante una ruta directa del API Gateway. El flujo principal pasa por MS Reportes:
 
 ```
 Flujo anterior:
@@ -180,7 +178,7 @@ Flujo actual (Seguro):
 ```
 
 **Beneficios:**
-- **Seguridad**: MS Coincidencias NO es accesible desde Internet
+- **Seguridad**: MS Coincidencias no dispone de una ruta pública en el API Gateway
 - **Encapsulación**: Depende lógicamente de Reportes
 - **Escalabilidad**: Facilita reemplazar con un servicio dedicado
 - **Mantenibilidad**: Cambios internos sin afectar API pública
@@ -193,8 +191,8 @@ curl http://localhost:8080/api/bff/coincidencias?userId=1
 # Correcto - Directamente en desarrollo
 curl http://localhost:8083/matches/pendientes
 
-# NO disponible - Puerto no expuesto
-curl http://localhost:8082/matches/pendientes  # Falla
+# Disponible directamente solo en desarrollo local/Docker
+curl http://localhost:8082/matches/pendientes
 ```
 
 Ver documentación de arquitectura para detalles técnicos completos.
@@ -207,8 +205,6 @@ Ver documentación de arquitectura para detalles técnicos completos.
 - **BFF Pattern**: API Gateway como Backend for Frontend
 - **Service Discovery**: Microservicios comunicándose internamente
 - **API Gateway Pattern**: Composición y orquestación de servicios
-
-Ver `ANALISIS_PATRONES_ARQUETIPOS.md` para análisis detallado de patrones.
 
 ### Tecnologías
 
@@ -227,8 +223,8 @@ Ver `ANALISIS_PATRONES_ARQUETIPOS.md` para análisis detallado de patrones.
 
 ### Disponibles
 
-**arquetipo-base-microservicio**
-- Ubicación: `/archetipos/arquetipo-base-microservicio`
+**sanos-microservice-archetype**
+- Ubicación: `/sanos-microservice-archetype`
 - Descripción: Plantilla base para crear nuevos microservicios
 - Incluye:
   - Estructura estándar de carpetas
@@ -243,19 +239,19 @@ Ver `ANALISIS_PATRONES_ARQUETIPOS.md` para análisis detallado de patrones.
 Para generar un nuevo microservicio:
 
 ```bash
-cd archetipos/arquetipo-base-microservicio
+cd sanos-microservice-archetype
 mvn install
 
 # Luego usar para generar nuevo proyecto
 mvn archetype:generate \
   -DarchetypeGroupId=com.sanosysalvos \
-  -DarchetypeArtifactId=arquetipo-base-microservicio \
+  -DarchetypeArtifactId=sanos-microservice-archetype \
   -DarchetypeVersion=1.0.0 \
   -DgroupId=com.sanosysalvos \
   -DartifactId=ms-nuevo-servicio
 ```
 
-Ver `ANALISIS_PATRONES_ARQUETIPOS.md` para instrucciones detalladas.
+Ver `sanos-microservice-archetype/ARCHETYPE-USAGE.md` para instrucciones detalladas.
 
 ## Requisitos Previos
 
@@ -263,69 +259,66 @@ Ver `ANALISIS_PATRONES_ARQUETIPOS.md` para instrucciones detalladas.
 - **Maven 3.9+**
 - **Docker 20.10+**
 - **Docker Compose 1.29+**
+- **Node.js 18+ y npm**
 - **MySQL 8.0+** (opcional si usas Docker)
 - **Git**
 
 ## Inicio Rápido
 
-### Desarrollo Local (Recomendado)
+### Docker Compose (Recomendado)
 
 #### 1. Clonar el repositorio
 
 ```bash
 git clone <repository-url>
-cd Sanos-y-Salvos-main
+cd Sanos-y-Salvos
 ```
 
-#### 2. Configurar la base de datos MySQL
+#### 2. Configurar variables de entorno
 
-1. Inicia XAMPP y verifica que MySQL está ejecutándose
-2. Abre phpMyAdmin: http://localhost/phpmyadmin
-3. Importa: `database/completo_script.sql`
-4. Se crean automáticamente las 3 bases de datos necesarias
-
-#### 3. Compilar el proyecto
-
-```bash
-mvn clean install -DskipTests
+```powershell
+Copy-Item .env.example .env
 ```
 
-#### 4. Ejecutar los microservicios
+#### 3. Levantar base de datos, microservicios y API Gateway
 
-En terminales separadas (orden recomendado):
-
-```bash
-# 1. MS Usuarios (8084) - Base de usuarios
-cd ms-usuarios && mvn spring-boot:run
-
-# 2. MS Reportes (8083) - Base de reportes + proxy de coincidencias
-cd ms-reportes && mvn spring-boot:run
-
-# 3. MS Geolocalizacion (8081) - Ubicaciones
-cd ms-geolocalizacion && mvn spring-boot:run
-
-# 4. MS Coincidencias (8082) - AISLADO, no expuesto públicamente
-cd ms-coincidencias && mvn spring-boot:run
-
-# 5. MS Notificaciones (8085) - Sistema de notificaciones
-cd ms-notificaciones && mvn spring-boot:run
-
-# 6. MS Proyectos (8086) - Gestión de proyectos
-cd ms-proyectos && mvn spring-boot:run
-
-# 7. API Gateway (8080) - BFF con enrutamiento
-cd api-gateway && mvn spring-boot:run
+```powershell
+docker compose up --build -d
+docker compose ps
 ```
 
-**Verificar que todos los servicios están activos:**
-```bash
-# API Gateway health check
-curl http://localhost:8080/api/health
+El backend queda disponible mediante el API Gateway en `http://localhost:8080`.
 
-# Otros servicios sin autenticación
-curl http://localhost:8083/reports    # MS Reportes
-curl http://localhost:8084/usuarios   # MS Usuarios
-curl http://localhost:8081/ubicaciones # MS Geolocalizacion
+#### 4. Levantar el frontend
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+El frontend queda disponible en `http://localhost:3000`.
+
+#### 5. Verificar el proyecto
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health
+Invoke-WebRequest -UseBasicParsing http://localhost:3000
+```
+
+### Desarrollo Local sin Docker
+
+Para usar MySQL local, importa `database/xampp_completo.sql`. Después ejecuta los módulos desde terminales separadas:
+
+```powershell
+cd ms-usuarios; .\mvnw.cmd spring-boot:run
+cd ms-reportes; .\mvnw.cmd spring-boot:run
+cd ms-geolocalizacion; .\mvnw.cmd spring-boot:run
+cd ms-coincidencias; .\mvnw.cmd spring-boot:run
+cd ms-notificaciones; .\mvnw.cmd spring-boot:run
+cd ms-proyectos; .\mvnw.cmd spring-boot:run
+cd ms-recursos-humanos; .\mvnw.cmd spring-boot:run
+cd api-gateway; .\mvnw.cmd spring-boot:run
 ```
 
 **Endpoints disponibles:**
@@ -337,9 +330,7 @@ curl http://localhost:8081/ubicaciones # MS Geolocalizacion
   - Endpoints: http://localhost:8083/matches/** (delegados por MS Reportes)
 - MS Notificaciones: http://localhost:8085
 - MS Proyectos: http://localhost:8086
-
-**Nota:** Ms-coincidencias NO está expuesto directamente. Para acceder a endpoints de coincidencias, 
-usar la ruta de MS Reportes: `GET http://localhost:8083/matches/pendientes`
+- MS Recursos Humanos: http://localhost:8087
 
 ## Estructura del Proyecto
 
@@ -348,6 +339,7 @@ Sanos-y-Salvos-main/
 ├── pom.xml                          # Parent POM multi-módulo
 ├── README.md
 ├── docker-compose.yml
+├── frontend/                        # React + TypeScript + Vite
 │
 ├── ms-usuarios/                     # Gestión de usuarios
 │   ├── pom.xml
@@ -379,20 +371,28 @@ Sanos-y-Salvos-main/
 │   ├── Dockerfile
 │   └── src/
 │
+├── ms-recursos-humanos/             # Empleados, departamentos y permisos
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── src/
+│
 ├── api-gateway/                     # API Gateway BFF
 │   ├── pom.xml
 │   ├── Dockerfile
 │   └── src/
 │
 ├── database/                        # Scripts SQL
-│   └── completo_script.sql
+│   └── xampp_completo.sql
 │
-└── scripts/                         # Scripts deployment
+├── sanos-microservice-archetype/    # Arquetipo Maven
+│
+└── scripts/                         # Scripts de despliegue y cobertura
     ├── build.sh
     ├── up.sh
     ├── down.sh
     ├── logs.sh
-    └── health-check.sh
+    ├── health-check.sh
+    └── show-coverage.ps1
 ```
 
 ## Desarrollo
@@ -419,23 +419,29 @@ mvn test -pl ms-proyectos
 
 ## Pruebas Unitarias y Cobertura de Codigo
 
-**320 tests unitarios implementados en 8 componentes backend**
+**332 tests implementados en 8 componentes backend y 13 tests frontend**
 
-La suite de pruebas cubre controladores, servicios, modelos, seguridad JWT, flujos BFF, notificaciones, coincidencias, geolocalizacion, reportes, proyectos y recursos humanos. Todos los microservicios Java superan el minimo solicitado de 60% de cobertura de linea con JaCoCo.
+La suite cubre controladores, servicios, modelos, seguridad JWT, flujos BFF, frontend, notificaciones, coincidencias, geolocalización, reportes, proyectos y recursos humanos. Todos los componentes superan el mínimo solicitado de 60% de cobertura de línea.
 
 ### Resumen de Cobertura por Modulo
 
-| Modulo | Tests | Lineas cubiertas | Cobertura de linea | Cobertura de instrucciones | Estado |
-|--------|------:|-----------------:|-------------------:|---------------------------:|--------|
-| **API Gateway** | 11 | 100/114 | **87.72%** | 84.91% | Cumple |
-| **MS Coincidencias** | 10 | 100/153 | **65.36%** | 70.34% | Cumple |
-| **MS Geolocalizacion** | 24 | 214/218 | **98.17%** | 98.09% | Cumple |
-| **MS Notificaciones** | 6 | 61/99 | **61.62%** | 62.15% | Cumple |
-| **MS Proyectos** | 20 | 93/114 | **81.58%** | 75.69% | Cumple |
-| **MS Recursos Humanos** | 13 | 122/163 | **74.85%** | 71.37% | Cumple |
-| **MS Reportes** | 116 | 236/253 | **93.28%** | 93.35% | Cumple |
-| **MS Usuarios** | 120 | 258/298 | **86.58%** | 86.99% | Cumple |
-| **TOTAL** | **320** | **1184/1412** | **83.85%** | - | Cumple |
+| Modulo | Tests | Lineas | Ramas | Instrucciones | Estado |
+|--------|------:|-------:|------:|--------------:|--------|
+| **API Gateway** | 11 | 87.7% | 62.5% | 84.9% | Cumple |
+| **MS Coincidencias** | 10 | 65.4% | 84.4% | 70.3% | Cumple |
+| **MS Geolocalizacion** | 24 | 98.2% | 76.5% | 98.1% | Cumple |
+| **MS Notificaciones** | 12 | 98.0% | 85.7% | 98.6% | Cumple |
+| **MS Proyectos** | 20 | 81.6% | 100.0% | 75.7% | Cumple |
+| **MS Recursos Humanos** | 19 | 97.5% | 92.9% | 97.5% | Cumple |
+| **MS Reportes** | 116 | 93.3% | 60.0% | 93.4% | Cumple |
+| **MS Usuarios** | 120 | 86.6% | 61.8% | 87.0% | Cumple |
+| **TOTAL BACKEND** | **332** | **89.0%** | **74.8%** | **88.7%** | Cumple |
+
+### Cobertura Frontend
+
+| Tests | Statements | Branch | Funcs | Lines | Estado |
+|------:|-----------:|-------:|------:|------:|--------|
+| **13** | **83.51%** | **65.95%** | **73.33%** | **83.51%** | Cumple |
 
 ### Detalle de Tests Implementados
 
@@ -463,21 +469,22 @@ La suite de pruebas cubre controladores, servicios, modelos, seguridad JWT, fluj
 - Modelos: ProyectoTareaModelTest.
 - Cobertura de linea: **81.58%**.
 
-**MS Recursos Humanos (13 tests)**
-- Controllers: EmpleadoControllerTest.
+**MS Recursos Humanos (19 tests)**
+- Controllers: EmpleadoControllerTest, DepartamentoControllerTest, PermisoControllerTest.
 - Services: EmpleadoServiceTest, DepartamentoPermisoServiceTest.
 - Modelos: RhModelTest.
-- Cobertura de linea: **74.85%**.
+- Cobertura de línea: **97.5%**.
 
 **MS Coincidencias (10 tests)**
 - Services: CoincidenciaServiceTest.
 - Modelos: PuntajeCoincidenciaTest.
 - Cobertura de linea: **65.36%**.
 
-**MS Notificaciones (6 tests)**
+**MS Notificaciones (12 tests)**
+- Controllers: NotificacionControllerTest.
 - Services: NotificacionServiceTest.
 - Modelos: NotificacionModelTest.
-- Cobertura de linea: **61.62%**.
+- Cobertura de línea: **98.0%**.
 
 **API Gateway (11 tests)**
 - Controllers: BFFControllerTest.
@@ -488,47 +495,38 @@ La suite de pruebas cubre controladores, servicios, modelos, seguridad JWT, fluj
 
 - **Framework**: JUnit 5 + Mockito.
 - **Base de datos de tests**: H2 in-memory con `@ActiveProfiles("test")`.
-- **Tests totales**: 320.
-- **Estado de ejecucion**: 320/320 PASSED.
+- **Tests totales**: 332 backend y 13 frontend.
+- **Estado de ejecución**: 345/345 PASSED.
 - **Cobertura minima requerida**: 60% por componente.
 - **Herramienta de cobertura**: JaCoCo v0.8.10.
 - **Reportes generados**: `{microservicio}/target/site/jacoco/index.html`.
 
 ### Ejecutar Tests
 
-```bash
-# Ejecutar tests de un microservicio y generar JaCoCo
-cd ms-usuarios
-mvn test jacoco:report
+```powershell
+# Ejecutar todos los tests backend desde la raíz
+mvn test
 
-# Ejecutar otros modulos
-cd ../ms-reportes && mvn test jacoco:report
-cd ../ms-geolocalizacion && mvn test jacoco:report
-cd ../ms-coincidencias && mvn test jacoco:report
-cd ../ms-notificaciones && mvn test jacoco:report
-cd ../ms-proyectos && mvn test jacoco:report
-cd ../ms-recursos-humanos && mvn test jacoco:report
-cd ../api-gateway && mvn test jacoco:report
+# Ejecutar los tests frontend
+cd frontend
+npm test
 ```
 
 ### Generar Reportes de Cobertura
 
-```bash
-# Desde cada microservicio
-mvn test jacoco:report
+```powershell
+# Mostrar cobertura backend y frontend ya generada
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\show-coverage.ps1
 
-# Reporte HTML
-target/site/jacoco/index.html
-
-# Archivos generados
-target/site/jacoco/jacoco.csv
-target/site/jacoco/jacoco.xml
-target/site/jacoco/index.html
+# Regenerar todos los tests y después mostrar cobertura
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\show-coverage.ps1 -RunTests
 ```
+
+Los reportes HTML backend quedan en `{microservicio}/target/site/jacoco/index.html`. El frontend genera `frontend/coverage/coverage-summary.json`.
 
 ### Validaciones de Pruebas
 
-- 320/320 tests ejecutados exitosamente.
+- 332/332 tests backend y 13/13 tests frontend ejecutados exitosamente.
 - 0 fallos, 0 errores, 0 skipped.
 - Todos los microservicios Java superan el 60% de cobertura de linea.
 - H2 configurado para pruebas unitarias sin depender de MySQL local.
@@ -544,19 +542,24 @@ target/site/jacoco/index.html
 
 ## Base de Datos
 
-Se crean automáticamente 3 bases de datos:
+Docker Compose crea automáticamente 5 bases de datos:
 
 - `sanosysalvos_usuarios` - MS Usuarios
-- `sanosysalvos` - MS Reportes, Geolocalizacion, Coincidencias, Proyectos
+- `sanosysalvos` - MS Reportes, Geolocalizacion y Coincidencias
 - `sanosysalvos_notificaciones` - MS Notificaciones
+- `sanosysalvos_proyectos` - MS Proyectos
+- `sanosysalvos_rh` - MS Recursos Humanos
 
-El script `database/completo_script.sql` se ejecuta automáticamente en la instalación.
+El script `docker/init/01-create-databases.sql` se ejecuta automáticamente al crear el contenedor MySQL. Para una instalación local con XAMPP, utiliza `database/xampp_completo.sql`.
 
 ## Despliegue con Docker
 
-```bash
+```powershell
+# Configurar variables de entorno la primera vez
+Copy-Item .env.example .env
+
 # Iniciar stack
-docker compose up -d
+docker compose up --build -d
 
 # Ver logs
 docker compose logs -f
@@ -611,7 +614,7 @@ GET    /matches/potenciales             - Obtener coincidencias potenciales
 GET    /matches/recientes               - Obtener coincidencias recientes
 ```
 
-**MS Coincidencias (Puerto 8082)** - NO EXPUESTO (uso interno solo)
+**MS Coincidencias (Puerto 8082)** - Disponible directamente en desarrollo local/Docker; no enrutado por el API Gateway.
 
 ---
 
@@ -619,7 +622,7 @@ GET    /matches/recientes               - Obtener coincidencias recientes
 
 ### Desarrollo
 
-1. Crea una rama siguiendo la estrategia definida en `PLAN_BRANCHING.md`:
+1. Crea una rama descriptiva:
 ```bash
 # Para nuevas features
 git checkout -b feature/nombre-descriptivo
@@ -641,9 +644,7 @@ mvn clean install -DskipTests
 mvn test
 ```
 
-4. Verifica que el código cumple con patrones de arquitectura:
-- Consulta `ANALISIS_PATRONES_ARQUETIPOS.md`
-- Utiliza los arquetipos como referencia
+4. Verifica que el código siga los patrones existentes y utiliza `sanos-microservice-archetype` como referencia para nuevos servicios.
 
 5. Push a tu rama:
 ```bash
@@ -654,10 +655,9 @@ git push origin nombre-rama
 
 ### Referencia de Documentos
 
-- **PLAN_BRANCHING.md**: Estrategia de branching y flujo de desarrollo
-- **ANALISIS_PATRONES_ARQUETIPOS.md**: Patrones arquitectónicos y uso de arquetipos
 - **repositorios.txt**: Enlaces y descripciones de repositorios
 - **Componentes README**: Instrucciones específicas por componente
+- **sanos-microservice-archetype/ARCHETYPE-USAGE.md**: Uso del arquetipo Maven
 
 ## Licencia
 
