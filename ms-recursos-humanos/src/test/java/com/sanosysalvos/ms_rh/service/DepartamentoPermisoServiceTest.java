@@ -58,6 +58,7 @@ class DepartamentoPermisoServiceTest {
         assertEquals("INACTIVO", actualizado.getEstado());
         assertNull(departamentoService.actualizarDepartamento(2L, cambios));
         assertTrue(departamentoService.eliminarDepartamento(1L));
+        assertFalse(departamentoService.eliminarDepartamento(2L));
         verify(departamentoRepository).deleteById(1L);
     }
 
@@ -86,6 +87,7 @@ class DepartamentoPermisoServiceTest {
         assertEquals("APROBADO", actualizado.getEstado());
         assertNull(permisoService.actualizarPermiso(2L, cambios));
         assertTrue(permisoService.eliminarPermiso(1L));
+        assertFalse(permisoService.eliminarPermiso(2L));
         verify(permisoRepository).deleteById(1L);
     }
 

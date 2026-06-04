@@ -15,6 +15,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class NotificacionServiceTest {
@@ -97,6 +98,31 @@ class NotificacionServiceTest {
         assertEquals("LEIDA", notificacion.getEstado());
         assertNotNull(notificacion.getFechaLectura());
         verify(notificacionRepository).deleteById(10L);
+    }
+
+    @Test
+    void crearEmailNoIntentaEnviarSiNoHayMailSender() {
+        NotificacionService serviceSinCorreo = new NotificacionService();
+        ReflectionTestUtils.setField(serviceSinCorreo, "notificacionRepository", notificacionRepository);
+        Notificacion guardada = notificacionGuardada();
+        when(notificacionRepository.save(any(Notificacion.class))).thenReturn(guardada);
+
+        serviceSinCorreo.crearNotificacion(1L, "EMAIL", "Asunto", "Contenido", "mail@test.com", "EVENTO", 3L);
+
+        verify(notificacionRepository, never()).findById(guardada.getId());
+        verify(mailSender, never()).send(any(org.springframework.mail.SimpleMailMessage.class));
+    }
+
+    @Test
+    void operacionesSobreNotificacionInexistenteNoGuardanCambios() {
+        Notificacion guardada = notificacionGuardada();
+        when(notificacionRepository.save(any(Notificacion.class))).thenReturn(guardada);
+        when(notificacionRepository.findById(10L)).thenReturn(Optional.empty());
+
+        service.crearNotificacion(1L, "INTERNA", "Asunto", "Contenido", "destino", "EVENTO", 3L);
+        service.marcarComoLeida(10L);
+
+        verify(notificacionRepository, times(1)).save(any(Notificacion.class));
     }
 
     private Notificacion notificacionGuardada() {
